@@ -50,12 +50,6 @@
 		.row-index {
 			display: none;
 		}
-
-		.btn-open-row {
-			.edit-grid-row {
-				display: none;
-			}
-		}
 	}
 }
 
@@ -119,6 +113,15 @@
 
 .grid-row-check {
 	margin-top: 2px;
+
+	&::after {
+		// Extend the checkbox's clickable area
+		display: block;
+		content: "";
+		inset: -8px;
+		position: absolute;
+		opacity: 0;
+	}
 }
 
 .template-row-index {

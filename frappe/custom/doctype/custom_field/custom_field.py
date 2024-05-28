@@ -258,13 +258,15 @@ def rename_fieldname(custom_field: str, fieldname: str):
 		frappe.msgprint(_("Old and new fieldnames are same."), alert=True)
 		return
 
-	frappe.db.rename_column(parent_doctype, old_fieldname, new_fieldname)
+	if frappe.db.has_column(field.dt, old_fieldname):
+		frappe.db.rename_column(parent_doctype, old_fieldname, new_fieldname)
 
 	# Update in DB after alter column is successful, alter column will implicitly commit, so it's
 	# best to commit change on field too to avoid any possible mismatch between two.
 	field.db_set("fieldname", field.fieldname, notify=True)
 	_update_fieldname_references(field, old_fieldname, new_fieldname)
 
+	frappe.msgprint(_("Custom field renamed to {0} successfully.").format(fieldname), alert=True)
 	frappe.db.commit()
 	frappe.clear_cache()
 

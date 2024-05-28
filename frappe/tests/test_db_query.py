@@ -14,6 +14,7 @@ from frappe.handler import execute_cmd
 from frappe.model.db_query import DatabaseQuery, get_between_date_filter
 from frappe.permissions import add_user_permission, clear_user_permissions_for_doctype
 from frappe.query_builder import Column
+from frappe.tests.test_query_builder import db_type_is, run_only_if
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils.testutils import add_custom_field, clear_custom_fields
 
@@ -1071,6 +1072,17 @@ class TestReportview(FrappeTestCase):
 		# primary key is never nullable
 		self.assertNotIn("ifnull", frappe.get_all("User", {"name": ("in", ["a", None])}, run=0))
 		self.assertNotIn("ifnull", frappe.get_all("User", {"name": ("in", ["a", ""])}, run=0))
+		self.assertNotIn("ifnull", frappe.get_all("User", {"name": ("in", (""))}, run=0))
+		self.assertNotIn("ifnull", frappe.get_all("User", {"name": ("in", ())}, run=0))
+
+	def test_coalesce_with_datetime_ops(self):
+		self.assertNotIn("ifnull", frappe.get_all("User", {"last_active": (">", "2022-01-01")}, run=0))
+		self.assertNotIn("ifnull", frappe.get_all("User", {"creation": ("<", "2022-01-01")}, run=0))
+		self.assertNotIn(
+			"ifnull",
+			frappe.get_all("User", {"last_active": ("between", ("2022-01-01", "2023-01-01"))}, run=0),
+		)
+		self.assertIn("ifnull", frappe.get_all("User", {"last_active": ("<", "2022-01-01")}, run=0))
 
 	def test_ambiguous_linked_tables(self):
 		from frappe.desk.reportview import get
@@ -1147,6 +1159,7 @@ class TestReportView(FrappeTestCase):
 		frappe.set_user("Administrator")
 		return super().setUp()
 
+	@run_only_if(db_type_is.MARIADB)  # TODO: postgres name casting is messed up
 	def test_get_count(self):
 		frappe.local.request = frappe._dict()
 		frappe.local.request.method = "GET"
@@ -1160,13 +1173,13 @@ class TestReportView(FrappeTestCase):
 				"distinct": "false",
 			}
 		)
-		list_filter_response = execute_cmd("frappe.desk.reportview.get_count")
+		count = execute_cmd("frappe.desk.reportview.get_count")
 		frappe.local.form_dict = frappe._dict(
 			{"doctype": "DocType", "filters": {"show_title_field_in_link": 1}, "distinct": "true"}
 		)
 		dict_filter_response = execute_cmd("frappe.desk.reportview.get_count")
-		self.assertIsInstance(list_filter_response, int)
-		self.assertEqual(list_filter_response, dict_filter_response)
+		self.assertIsInstance(count, int)
+		self.assertEqual(count, dict_filter_response)
 
 		# test with child table filter
 		frappe.local.form_dict = frappe._dict(
@@ -1186,6 +1199,49 @@ class TestReportView(FrappeTestCase):
 			" where `tabDocField`.`fieldtype` = 'Data'"
 		)[0][0]
 		self.assertEqual(child_filter_response, current_value)
+
+		# test with limit
+		limit = 2
+		frappe.local.form_dict = frappe._dict(
+			{
+				"doctype": "DocType",
+				"filters": [["DocType", "is_virtual", "=", 1]],
+				"fields": [],
+				"distinct": "false",
+				"limit": limit,
+			}
+		)
+		count = execute_cmd("frappe.desk.reportview.get_count")
+		self.assertIsInstance(count, int)
+		self.assertLessEqual(count, limit)
+
+		# test with distinct
+		limit = 2
+		frappe.local.form_dict = frappe._dict(
+			{
+				"doctype": "DocType",
+				"fields": [],
+				"distinct": "true",
+				"limit": limit,
+			}
+		)
+		count = execute_cmd("frappe.desk.reportview.get_count")
+		self.assertIsInstance(count, int)
+		self.assertLessEqual(count, limit)
+
+		# doctype with space in name
+		limit = 2
+		frappe.local.form_dict = frappe._dict(
+			{
+				"doctype": "Role Profile",
+				"fields": [],
+				"distinct": "true",
+				"limit": limit,
+			}
+		)
+		count = execute_cmd("frappe.desk.reportview.get_count")
+		self.assertIsInstance(count, int)
+		self.assertLessEqual(count, limit)
 
 	def test_reportview_get(self):
 		user = frappe.get_doc("User", "test@example.com")

@@ -264,7 +264,7 @@ def install_app(name, verbose=False, set_as_patched=True, force=False):
 	if app_hooks.required_apps:
 		for app in app_hooks.required_apps:
 			required_app = parse_app_name(app)
-			install_app(required_app, verbose=verbose, force=force)
+			install_app(required_app, verbose=verbose)
 
 	frappe.flags.in_install = name
 	frappe.clear_cache()
@@ -352,6 +352,14 @@ def remove_app(app_name, dry_run=False, yes=False, no_backup=False, force=False)
 		if app_name not in frappe.get_installed_apps():
 			click.secho(f"App {app_name} not installed on Site {site}", fg="yellow")
 			return
+
+	# Don't allow uninstalling if we have dependent apps installed
+	for app in frappe.get_installed_apps():
+		if app != app_name:
+			hooks = frappe.get_hooks(app_name=app)
+			if hooks.required_apps and any(app_name in required_app for required_app in hooks.required_apps):
+				click.secho(f"App {app_name} is a dependency of {app}. Uninstall {app} first.", fg="yellow")
+				return
 
 	print(f"Uninstalling App {app_name} from Site {site}...")
 

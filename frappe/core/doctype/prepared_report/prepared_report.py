@@ -7,6 +7,7 @@ import json
 from rq import get_current_job
 
 import frappe
+from frappe.database.utils import dangerously_reconnect_on_connection_abort
 from frappe.desk.form.load import get_attachments
 from frappe.desk.query_report import generate_report_result
 from frappe.model.document import Document
@@ -81,8 +82,8 @@ def generate_report(prepared_report):
 
 		instance.status = "Completed"
 	except Exception:
-		instance.status = "Error"
-		instance.error_message = frappe.get_traceback()
+		# we need to ensure that error gets stored
+		_save_error(instance, error=frappe.get_traceback(with_context=True))
 
 	instance.report_end_time = frappe.utils.now()
 	instance.save(ignore_permissions=True)
@@ -97,6 +98,14 @@ def generate_report(prepared_report):
 def update_job_id(prepared_report, job_id):
 	frappe.db.set_value("Prepared Report", prepared_report, "job_id", job_id, update_modified=False)
 	frappe.db.commit()
+
+
+@dangerously_reconnect_on_connection_abort
+def _save_error(instance, error):
+	instance.reload()
+	instance.status = "Error"
+	instance.error_message = error
+	instance.save(ignore_permissions=True)
 
 
 @frappe.whitelist()
@@ -163,7 +172,7 @@ def create_json_gz_file(data, dt, dn):
 	# Storing data in CSV file causes information loss
 	# Reports like P&L Statement were completely unsuable because of this
 	json_filename = "{}.json.gz".format(frappe.utils.data.format_datetime(frappe.utils.now(), "Y-m-d-H:M"))
-	encoded_content = frappe.safe_encode(frappe.as_json(data))
+	encoded_content = frappe.safe_encode(frappe.as_json(data, indent=None, separators=(",", ":")))
 	compressed_content = gzip_compress(encoded_content)
 
 	# Call save() file function to upload and attach the file

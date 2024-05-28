@@ -12,7 +12,13 @@ from psycopg2.errorcodes import (
 	UNDEFINED_TABLE,
 	UNIQUE_VIOLATION,
 )
-from psycopg2.errors import ReadOnlySqlTransaction, SequenceGeneratorLimitExceeded, SyntaxError
+from psycopg2.errors import (
+	InterfaceError,
+	LockNotAvailable,
+	ReadOnlySqlTransaction,
+	SequenceGeneratorLimitExceeded,
+	SyntaxError,
+)
 from psycopg2.extensions import ISOLATION_LEVEL_REPEATABLE_READ
 
 import frappe
@@ -53,7 +59,7 @@ class PostgresExceptionUtil:
 	@staticmethod
 	def is_timedout(e):
 		# http://initd.org/psycopg/docs/extensions.html?highlight=datatype#psycopg2.extensions.QueryCanceledError
-		return isinstance(e, psycopg2.extensions.QueryCanceledError)
+		return isinstance(e, (psycopg2.extensions.QueryCanceledError | LockNotAvailable))
 
 	@staticmethod
 	def is_read_only_mode_error(e) -> bool:
@@ -106,6 +112,10 @@ class PostgresExceptionUtil:
 	@staticmethod
 	def is_data_too_long(e):
 		return getattr(e, "pgcode", None) == STRING_DATA_RIGHT_TRUNCATION
+
+	@staticmethod
+	def is_interface_error(e):
+		return isinstance(e, InterfaceError)
 
 
 class PostgresDatabase(PostgresExceptionUtil, Database):
@@ -314,7 +324,6 @@ class PostgresDatabase(PostgresExceptionUtil, Database):
 			db_table = PostgresTable(doctype, meta)
 			db_table.validate()
 
-			self.commit()
 			db_table.sync()
 			self.begin()
 

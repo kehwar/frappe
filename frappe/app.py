@@ -48,7 +48,9 @@ class RequestContext:
 
 # If gc.freeze is done then importing modules before forking allows us to share the memory
 if frappe._tune_gc:
+	import babel.dates
 	import bleach
+	import num2words
 
 	import frappe.boot
 	import frappe.client
@@ -375,11 +377,7 @@ def handle_exception(e):
 
 def sync_database(rollback: bool) -> bool:
 	# if HTTP method would change server state, commit if necessary
-	if (
-		frappe.db
-		and (frappe.local.flags.commit or frappe.local.request.method in UNSAFE_HTTP_METHODS)
-		and frappe.db.transaction_writes
-	):
+	if frappe.db and (frappe.local.flags.commit or frappe.local.request.method in UNSAFE_HTTP_METHODS):
 		frappe.db.commit()
 		rollback = False
 	elif frappe.db:
