@@ -962,6 +962,8 @@ class DatabaseQuery:
 			doctype_conditions = self.get_permission_query_conditions()
 			if doctype_conditions:
 				conditions += (" and " + doctype_conditions) if conditions else doctype_conditions
+				if not self.shared:
+					self.shared = frappe.share.get_shared(self.doctype, self.user)
 
 			# share is an OR condition, if there is a role permission
 			if not only_if_shared and self.shared and conditions:
