@@ -742,6 +742,7 @@ frappe.ui.form.Form = class FrappeForm {
 		let me = this;
 		return new Promise((resolve, reject) => {
 			btn && $(btn).prop("disabled", true);
+			frappe.is_saving = true;
 			frappe.ui.form.close_grid_form();
 			me.validate_and_save(save_action, callback, btn, on_error, resolve, reject);
 		})
@@ -759,6 +760,7 @@ frappe.ui.form.Form = class FrappeForm {
 		this.validate_form_action(save_action, resolve);
 
 		var after_save = function (r) {
+			frappe.is_saving = false;
 			// to remove hash from URL to avoid scroll after save
 			history.replaceState(null, null, " ");
 			if (!r.exc) {
@@ -794,6 +796,7 @@ frappe.ui.form.Form = class FrappeForm {
 				console.error(e);
 			}
 			btn && $(btn).prop("disabled", false);
+			frappe.is_saving = false;
 			if (on_error) {
 				on_error();
 				reject();
@@ -1095,6 +1098,7 @@ frappe.ui.form.Form = class FrappeForm {
 
 	handle_save_fail(btn, on_error) {
 		$(btn).prop("disabled", false);
+		frappe.is_saving = false;
 		if (on_error) {
 			on_error();
 		}
@@ -2158,3 +2162,4 @@ frappe.ui.form.Form = class FrappeForm {
 };
 
 frappe.validated = 0;
+frappe.is_saving = 0;
