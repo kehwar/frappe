@@ -289,4 +289,7 @@ frappe.ui.form.Control = class BaseControl {
 			return true;
 		}
 	}
+	can_write() {
+		return this.disp_status == "Write";
+	}
 };
