@@ -426,7 +426,7 @@ def get_group_by_column_label(args, meta):
 
 
 def enable_prepared_report(report: str, site: str):
-	pass # disable # todo: make configurable
+	return # disable # todo: make configurable
 	frappe.init(site)
 	frappe.connect()
 	frappe.db.set_value("Report", report, "prepared_report", 1)
