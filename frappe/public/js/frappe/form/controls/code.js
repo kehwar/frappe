@@ -195,6 +195,8 @@ frappe.ui.form.ControlCode = class ControlCode extends frappe.ui.form.ControlTex
 			Golang: "ace/mode/golang",
 			Go: "ace/mode/golang",
 			Jinja: "ace/mode/django",
+			SQL: "ace/mode/sql",
+			MySQL: "ace/mode/mysql",
 		};
 		const language = this.df.options;
 
