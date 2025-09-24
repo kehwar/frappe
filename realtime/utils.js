@@ -1,10 +1,12 @@
 const request = require("superagent");
+const { get_conf } = require("../node_utils");
+const conf = get_conf();
 
 function get_url(socket, path) {
 	if (!path) {
 		path = "";
 	}
-	return socket.request.headers.origin + path;
+	return (conf.socketio_auth_url ?? socket.request.headers.origin) + path;
 }
 
 // Authenticates a partial request created using superagent
