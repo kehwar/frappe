@@ -1,13 +1,15 @@
 {
  "actions": [],
  "allow_import": 1,
- "autoname": "Prompt",
+ "allow_rename": 1,
+ "autoname": "hash",
  "creation": "2013-01-10 16:34:01",
  "description": "Adds a custom client script to a DocType",
  "doctype": "DocType",
  "document_type": "Document",
  "engine": "InnoDB",
  "field_order": [
+  "title",
   "dt",
   "view",
   "column_break_3",
@@ -71,17 +73,23 @@
   {
    "fieldname": "section_break_6",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title"
   }
  ],
+ "grid_page_length": 50,
  "icon": "fa fa-glass",
  "idx": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-08 15:52:37.525003",
+ "modified": "2025-10-16 17:55:35.438411",
  "modified_by": "Administrator",
  "module": "Custom",
  "name": "Client Script",
- "naming_rule": "Set by user",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
@@ -107,8 +115,11 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
+ "title_field": "title",
  "track_changes": 1
 }
