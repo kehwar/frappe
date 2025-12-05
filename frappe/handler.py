@@ -98,6 +98,9 @@ def run_server_script(server_script):
 def is_valid_http_method(method):
 	if frappe.flags.in_safe_exec:
 		return
+	
+	if not hasattr(frappe.local, "request"):
+		return
 
 	http_method = frappe.local.request.method
 
