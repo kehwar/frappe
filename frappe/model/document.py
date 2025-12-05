@@ -1328,6 +1328,15 @@ class Document(BaseDocument):
 				if frappe.get_cached_value("User", frappe.session.user, "follow_created_documents"):
 					follow_document(self.doctype, self.name, frappe.session.user)
 
+	def get_diff(self):
+		from frappe.core.doctype.version.version import get_diff
+
+		doc_to_compare = self._doc_before_save
+		if not doc_to_compare and (amended_from := self.get("amended_from")):
+			doc_to_compare = frappe.get_doc(self.doctype, amended_from)
+
+		return get_diff(self._doc_before_save, self)
+
 	@staticmethod
 	def hook(f):
 		"""Decorator: Make method `hookable` (i.e. extensible by another app).
