@@ -134,6 +134,13 @@ def safe_eval(code, eval_globals=None, eval_locals=None):
 	eval_globals["__builtins__"] = {}
 	eval_globals.update(WHITELISTED_SAFE_EVAL_GLOBALS)
 
+	# hooks
+	for hook in frappe.get_hooks("safe_eval_globals"):
+		hook_method = frappe.get_attr(hook)
+		hook_data = hook_method(eval_globals)
+		if isinstance(hook_data, dict):
+			eval_globals.update(hook_data)
+
 	return eval(
 		compile_restricted(code, filename="<safe_eval>", policy=FrappeTransformer, mode="eval"),
 		eval_globals,
@@ -306,6 +313,13 @@ def get_safe_globals():
 
 	# add common python builtins
 	out.update(get_python_builtins())
+
+	# hooks
+	for hook in frappe.get_hooks("safe_exec_globals"):
+		hook_method = frappe.get_attr(hook)
+		hook_data = hook_method(out)
+		if isinstance(hook_data, dict):
+			out.update(hook_data)
 
 	return out
 
