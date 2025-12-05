@@ -1331,11 +1331,14 @@ class Document(BaseDocument):
 	def get_diff(self):
 		from frappe.core.doctype.version.version import get_diff
 
-		doc_to_compare = self._doc_before_save
+		doc_to_compare = self.get_doc_before_save()
 		if not doc_to_compare and (amended_from := self.get("amended_from")):
 			doc_to_compare = frappe.get_doc(self.doctype, amended_from)
 
-		return get_diff(self._doc_before_save, self)
+		if not doc_to_compare:
+			return
+
+		return get_diff(doc_to_compare, self)
 
 	@staticmethod
 	def hook(f):
