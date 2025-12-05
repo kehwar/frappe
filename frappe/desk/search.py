@@ -328,6 +328,9 @@ def get_user_groups():
 def get_link_title(doctype, docname):
 	meta = frappe.get_meta(doctype)
 
+	if meta.is_virtual:
+		return docname
+
 	if meta.show_title_field_in_link:
 		return frappe.db.get_value(doctype, docname, meta.title_field)
 
