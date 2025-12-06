@@ -140,6 +140,9 @@ class EmailServer:
 
 			# connection established!
 			return True
+		
+		except ConnectionRefusedError:
+			return False
 
 		except _socket.error:
 			frappe.log_error("POP: Unable to connect")
