@@ -168,7 +168,8 @@ class EmailServer:
 			if cint(self.settings.use_imap):
 				self.imap.logout()
 			else:
-				self.pop.quit()
+				if hasattr(self, "pop"):
+					self.pop.quit()
 		except imaplib.IMAP4.abort:
 			self.connect()
 			self.logout()
