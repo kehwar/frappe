@@ -111,7 +111,7 @@ def get_next(doctype, value, prev, filters=None, sort_order="desc", sort_field="
 	if is_virtual:
 		controller = get_controller(doctype)
 		if hasattr(controller, "get_value") and callable(getattr(controller, "get_value", None)):
-			sort_field_value = controller.get_value(doctype, value, sort_field)
+			sort_field_value = controller.get_value(value, sort_field)
 		else:
 			sort_field_value = frappe.get_value(doctype, value, sort_field)
 	else:
