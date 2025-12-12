@@ -84,7 +84,10 @@ def get_next(doctype, value, prev, filters=None, sort_order="desc", sort_field="
 	from frappe.model.utils import is_virtual_doctype
 
 	# Check if doctype is virtual
-	if is_virtual_doctype(doctype):
+	is_virtual = is_virtual_doctype(doctype)
+	controller = None
+	
+	if is_virtual:
 		controller = get_controller(doctype)
 		# If controller has a custom get_next method, use it
 		if hasattr(controller, "get_next") and callable(getattr(controller, "get_next", None)):
@@ -106,8 +109,7 @@ def get_next(doctype, value, prev, filters=None, sort_order="desc", sort_field="
 
 	# # add condition for next or prev item
 	# For virtual doctypes, use controller's get_value if available
-	if is_virtual_doctype(doctype):
-		controller = get_controller(doctype)
+	if is_virtual and controller:
 		if hasattr(controller, "get_value") and callable(getattr(controller, "get_value", None)):
 			sort_field_value = controller.get_value(doctype, value, sort_field)
 		else:
