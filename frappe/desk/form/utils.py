@@ -80,6 +80,16 @@ def update_comment_publicity(name: str, publish: bool):
 
 @frappe.whitelist()
 def get_next(doctype, value, prev, filters=None, sort_order="desc", sort_field="modified"):
+	from frappe.model.base_document import get_controller
+	from frappe.model.utils import is_virtual_doctype
+
+	# Check if doctype is virtual
+	if is_virtual_doctype(doctype):
+		controller = get_controller(doctype)
+		# If controller has a custom get_next method, use it
+		if hasattr(controller, "get_next") and callable(getattr(controller, "get_next", None)):
+			return controller.get_next(doctype, value, prev, filters, sort_order, sort_field)
+
 	prev = int(prev)
 	if not filters:
 		filters = []
@@ -95,7 +105,17 @@ def get_next(doctype, value, prev, filters=None, sort_order="desc", sort_field="
 		condition = "<" if condition == ">" else ">"
 
 	# # add condition for next or prev item
-	filters.append([doctype, sort_field, condition, frappe.get_value(doctype, value, sort_field)])
+	# For virtual doctypes, use controller's get_value if available
+	if is_virtual_doctype(doctype):
+		controller = get_controller(doctype)
+		if hasattr(controller, "get_value") and callable(getattr(controller, "get_value", None)):
+			sort_field_value = controller.get_value(doctype, value, sort_field)
+		else:
+			sort_field_value = frappe.get_value(doctype, value, sort_field)
+	else:
+		sort_field_value = frappe.get_value(doctype, value, sort_field)
+	
+	filters.append([doctype, sort_field, condition, sort_field_value])
 
 	res = frappe.get_list(
 		doctype,
