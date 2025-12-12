@@ -204,15 +204,15 @@ class TestVirtualDoctypes(FrappeTestCase):
 		doc3.insert()
 
 		# Test getting next document
-		# Starting from doc2, getting next (which should be doc3 in desc order)
+		# In descending order by modified: doc3 (newest) -> doc2 -> doc1 (oldest)
+		# So "next" from doc2 (going backward in time) should be doc1
 		next_doc = get_next(TEST_DOCTYPE_NAME, doc2.name, prev=0, sort_order="desc", sort_field="modified")
 		
-		# Since we're using modified field and doc3 was created last, it should come before doc2 in desc order
-		# So "next" from doc2 should be doc1 (older)
 		if next_doc:
 			self.assertIn(next_doc, [doc1.name, doc3.name])
 
 		# Test getting previous document
+		# "previous" from doc2 (going forward in time) should be doc3
 		prev_doc = get_next(TEST_DOCTYPE_NAME, doc2.name, prev=1, sort_order="desc", sort_field="modified")
 		if prev_doc:
 			self.assertIn(prev_doc, [doc1.name, doc3.name])
