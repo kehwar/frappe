@@ -619,16 +619,19 @@ def validate_auth():
 	# First, try authentication via hooks
 	validate_auth_via_hooks()
 
-	# If no user has been set by hooks, proceed with other authentication methods
-	if frappe.session.user in ("", "Guest"):
-		if len(authorization_header) == 2:
-			validate_oauth(authorization_header)
-			validate_auth_via_api_keys(authorization_header)
+	# If user has been set by hooks, we're done
+	if frappe.session.user not in ("", "Guest"):
+		return
 
-		# If login via bearer, basic or keypair didn't work then authentication failed and we
-		# should terminate here.
-		if len(authorization_header) == 2 and frappe.session.user in ("", "Guest"):
-			raise frappe.AuthenticationError
+	# Proceed with other authentication methods
+	if len(authorization_header) == 2:
+		validate_oauth(authorization_header)
+		validate_auth_via_api_keys(authorization_header)
+
+	# If login via bearer, basic or keypair didn't work then authentication failed and we
+	# should terminate here.
+	if len(authorization_header) == 2 and frappe.session.user in ("", "Guest"):
+		raise frappe.AuthenticationError
 
 
 def validate_oauth(authorization_header):
