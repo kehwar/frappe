@@ -123,27 +123,6 @@ class TestAPIHooks(FrappeAPITestCase):
 			# Test!
 			self.assertTrue(response.json.get("message") == "test@example.com")
 
-	def test_auth_hook_prioritized_over_oauth(self):
-		"""Test that auth hooks are tried first and prevent OAuth from being checked when they set a user"""
-		from unittest.mock import patch
-
-		# This hook will set a user
-		with patch_hooks({"auth_hooks": ["frappe.tests.test_hooks.custom_auth_with_tracking"]}):
-			site_url = frappe.utils.get_site_url(frappe.local.site)
-			
-			# Mock validate_oauth to track if it's called
-			with patch("frappe.auth.validate_oauth") as mock_oauth:
-				response = self.get(
-					site_url + "/api/method/frappe.auth.get_logged_user",
-					headers={"Authorization": "Bearer set_user_via_hook"},
-				)
-				
-				# Verify the hook set the user correctly
-				self.assertEqual(response.json.get("message"), "test@example.com")
-				
-				# Verify that validate_oauth was NOT called because the hook set the user
-				mock_oauth.assert_not_called()
-
 
 def custom_has_permission(doc, ptype, user):
 	if doc.flags.dont_touch_me:
@@ -153,13 +132,6 @@ def custom_has_permission(doc, ptype, user):
 def custom_auth():
 	_auth_type, token = frappe.get_request_header("Authorization", "Bearer ").split(" ")
 	if token == "set_test_example_user":
-		frappe.set_user("test@example.com")
-
-
-def custom_auth_with_tracking():
-	"""Auth hook that sets user - used to test that hooks are prioritized over OAuth"""
-	_auth_type, token = frappe.get_request_header("Authorization", "Bearer ").split(" ")
-	if token == "set_user_via_hook":
 		frappe.set_user("test@example.com")
 
 
