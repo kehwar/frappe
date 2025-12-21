@@ -203,9 +203,8 @@ def apply_workflow_transition(doc, transition, update=True, workflow=None, user=
 
 		doc.save(ignore_permissions=True)
 
-		# Add workflow comment only if state hasn't changed from starting state
-		if starting_state == doc.get(f"{workflow.workflow_state_field}_starting"):
-			doc.add_comment("Workflow", _(doc.get(workflow.workflow_state_field)))
+		# Add workflow comment
+		doc.add_comment("Workflow", _(doc.get(workflow.workflow_state_field)))
 
 		# Call after_transition hook if defined
 		doc.run_method("after_transition", transition)
