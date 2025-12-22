@@ -27,5 +27,6 @@ class ClientScript(Document):
 		frappe.clear_cache(doctype=self.dt)
 
 	def autoname(self):
-		from frappe.model.naming import append_number_if_name_exists
-		self.name = append_number_if_name_exists("Client Script", self.title)
+		if not self.name:
+			from frappe.model.naming import append_number_if_name_exists
+			self.name = append_number_if_name_exists("Client Script", self.title)

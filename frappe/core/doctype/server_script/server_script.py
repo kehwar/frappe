@@ -73,8 +73,9 @@ class ServerScript(Document):
 
 	# end: auto-generated types
 	def autoname(self):
-		from frappe.model.naming import append_number_if_name_exists
-		self.name = append_number_if_name_exists("Server Script", self.title)
+		if not self.name:
+			from frappe.model.naming import append_number_if_name_exists
+			self.name = append_number_if_name_exists("Server Script", self.title)
 
 	def validate(self):
 		frappe.only_for("Script Manager", True)
