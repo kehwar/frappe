@@ -4,6 +4,7 @@ import frappe
 # to avoid circular imports
 
 EVENT_MAP = {
+	"before_naming": "Before Naming",
 	"before_insert": "Before Insert",
 	"after_insert": "After Insert",
 	"before_validate": "Before Validate",
@@ -21,6 +22,8 @@ EVENT_MAP = {
 	"on_update_after_submit": "After Save (Submitted Document)",
 	"before_print": "Before Print",
 	"on_payment_authorized": "On Payment Authorization",
+	"before_change": "Before Value Change",
+	"on_change": "Value Change",
 }
 
 
