@@ -54,6 +54,8 @@ class ServerScript(Document):
 			"After Change",
 			"Before Export",
 			"Before Import",
+			"Before Workflow Transition",
+			"After Workflow Transition",
 		]
 		enable_rate_limit: DF.Check
 		event_frequency: DF.Literal[

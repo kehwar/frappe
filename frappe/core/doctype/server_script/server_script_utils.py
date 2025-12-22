@@ -27,6 +27,8 @@ EVENT_MAP = {
 	"on_change": "After Change",
 	"before_export": "Before Export",
 	"before_import": "Before Import",
+	"before_transition": "Before Workflow Transition",
+	"after_transition": "After Workflow Transition",
 }
 
 

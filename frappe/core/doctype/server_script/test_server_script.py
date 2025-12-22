@@ -164,6 +164,26 @@ doc.flags.before_export_called = True
 doc.flags.before_import_called = True
 """,
 	),
+	dict(
+		title="test_before_transition",
+		script_type="DocType Event",
+		doctype_event="Before Workflow Transition",
+		reference_doctype="ToDo",
+		script="""
+# Track that before_transition was called
+doc.flags.before_transition_called = True
+""",
+	),
+	dict(
+		title="test_after_transition",
+		script_type="DocType Event",
+		doctype_event="After Workflow Transition",
+		reference_doctype="ToDo",
+		script="""
+# Track that after_transition was called
+doc.flags.after_transition_called = True
+""",
+	),
 ]
 
 
