@@ -31,9 +31,11 @@ class ServerScript(Document):
 		cron_format: DF.Data | None
 		disabled: DF.Check
 		doctype_event: DF.Literal[
+			"Before Naming",
 			"Before Insert",
 			"Before Validate",
 			"Before Save",
+			"After Validate",
 			"After Insert",
 			"After Save",
 			"Before Rename",
@@ -48,6 +50,12 @@ class ServerScript(Document):
 			"After Save (Submitted Document)",
 			"Before Print",
 			"On Payment Authorization",
+			"Before Change",
+			"After Change",
+			"Before Export",
+			"Before Import",
+			"Before Workflow Transition",
+			"After Workflow Transition",
 		]
 		enable_rate_limit: DF.Check
 		event_frequency: DF.Literal[
