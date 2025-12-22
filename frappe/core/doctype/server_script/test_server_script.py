@@ -10,7 +10,7 @@ from frappe.utils import get_site_url
 
 scripts = [
 	dict(
-		name="test_todo",
+		title="test_todo",
 		script_type="DocType Event",
 		doctype_event="Before Insert",
 		reference_doctype="ToDo",
@@ -20,7 +20,7 @@ if "test" in doc.description:
 """,
 	),
 	dict(
-		name="test_todo_validate",
+		title="test_todo_validate",
 		script_type="DocType Event",
 		doctype_event="Before Insert",
 		reference_doctype="ToDo",
@@ -30,7 +30,7 @@ if "validate" in doc.description:
 """,
 	),
 	dict(
-		name="test_api",
+		title="test_api",
 		script_type="API",
 		api_method="test_server_script",
 		allow_guest=1,
@@ -39,7 +39,7 @@ frappe.response['message'] = 'hello'
 """,
 	),
 	dict(
-		name="test_return_value",
+		title="test_return_value",
 		script_type="API",
 		api_method="test_return_value",
 		allow_guest=1,
@@ -48,7 +48,7 @@ frappe.flags = 'hello'
 """,
 	),
 	dict(
-		name="test_permission_query",
+		title="test_permission_query",
 		script_type="Permission Query",
 		reference_doctype="ToDo",
 		script="""
@@ -56,7 +56,7 @@ conditions = '1 = 1'
 """,
 	),
 	dict(
-		name="test_invalid_namespace_method",
+		title="test_invalid_namespace_method",
 		script_type="DocType Event",
 		doctype_event="Before Insert",
 		reference_doctype="Note",
@@ -65,7 +65,7 @@ frappe.method_that_doesnt_exist("do some magic")
 """,
 	),
 	dict(
-		name="test_todo_commit",
+		title="test_todo_commit",
 		script_type="DocType Event",
 		doctype_event="Before Save",
 		reference_doctype="ToDo",
@@ -75,7 +75,7 @@ frappe.db.commit()
 """,
 	),
 	dict(
-		name="test_add_index",
+		title="test_add_index",
 		script_type="DocType Event",
 		doctype_event="Before Save",
 		reference_doctype="ToDo",
@@ -85,7 +85,7 @@ frappe.db.add_index("Todo", ["color", "date"])
 """,
 	),
 	dict(
-		name="test_before_rename",
+		title="test_before_rename",
 		script_type="DocType Event",
 		doctype_event="After Rename",
 		reference_doctype="Role",
@@ -95,7 +95,7 @@ doc.save()
 """,
 	),
 	dict(
-		name="test_after_rename",
+		title="test_after_rename",
 		script_type="DocType Event",
 		doctype_event="After Rename",
 		reference_doctype="Role",
@@ -113,10 +113,13 @@ class TestServerScript(FrappeTestCase):
 		super().setUpClass()
 		frappe.db.truncate("Server Script")
 		frappe.get_doc("User", "Administrator").add_roles("Script Manager")
+		cls.script_map = {}
 		for script in scripts:
 			script_doc = frappe.get_doc(doctype="Server Script")
 			script_doc.update(script)
 			script_doc.insert()
+			# Store the mapping of title to generated name
+			cls.script_map[script["title"]] = script_doc.name
 		cls.enable_safe_exec()
 		frappe.db.commit()
 		return super().setUpClass()
@@ -153,7 +156,7 @@ class TestServerScript(FrappeTestCase):
 		self.assertEqual("hello", response.json()["message"])
 
 	def test_api_return(self):
-		self.assertEqual(frappe.get_doc("Server Script", "test_return_value").execute_method(), "hello")
+		self.assertEqual(frappe.get_doc("Server Script", self.script_map["test_return_value"]).execute_method(), "hello")
 
 	def test_permission_query(self):
 		if frappe.conf.db_type == "mariadb":
@@ -179,7 +182,7 @@ class TestServerScript(FrappeTestCase):
 		)
 
 	def test_commit_in_doctype_event(self):
-		server_script = frappe.get_doc("Server Script", "test_todo_commit")
+		server_script = frappe.get_doc("Server Script", self.script_map["test_todo_commit"])
 		server_script.disabled = 0
 		server_script.save()
 
@@ -189,7 +192,7 @@ class TestServerScript(FrappeTestCase):
 		server_script.save()
 
 	def test_add_index_in_doctype_event(self):
-		server_script = frappe.get_doc("Server Script", "test_add_index")
+		server_script = frappe.get_doc("Server Script", self.script_map["test_add_index"])
 		server_script.disabled = 0
 		server_script.save()
 
@@ -204,7 +207,7 @@ class TestServerScript(FrappeTestCase):
 
 		script = frappe.get_doc(
 			doctype="Server Script",
-			name="test_qb_restrictions",
+			title="test_qb_restrictions",
 			script_type="API",
 			api_method="test_qb_restrictions",
 			allow_guest=1,
@@ -241,7 +244,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 		# why not
 		script = frappe.get_doc(
 			doctype="Server Script",
-			name="test_nested_scripts_1",
+			title="test_nested_scripts_1",
 			script_type="API",
 			api_method="test_nested_scripts_1",
 			script="""log("nothing")""",
@@ -251,7 +254,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 
 		script = frappe.get_doc(
 			doctype="Server Script",
-			name="test_nested_scripts_2",
+			title="test_nested_scripts_2",
 			script_type="API",
 			api_method="test_nested_scripts_2",
 			script="""frappe.call("test_nested_scripts_1")""",
@@ -262,7 +265,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 	def test_server_script_rate_limiting(self):
 		script1 = frappe.get_doc(
 			doctype="Server Script",
-			name="rate_limited_server_script",
+			title="rate_limited_server_script",
 			script_type="API",
 			enable_rate_limit=1,
 			allow_guest=1,
@@ -275,7 +278,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 
 		script2 = frappe.get_doc(
 			doctype="Server Script",
-			name="rate_limited_server_script2",
+			title="rate_limited_server_script2",
 			script_type="API",
 			enable_rate_limit=1,
 			allow_guest=1,
@@ -310,7 +313,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 	def test_server_script_scheduled(self):
 		scheduled_script = frappe.get_doc(
 			doctype="Server Script",
-			name="scheduled_script_wo_cron",
+			title="scheduled_script_wo_cron",
 			script_type="Scheduler Event",
 			script="""frappe.flags = {"test": True}""",
 			event_frequency="Hourly",
@@ -318,7 +321,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 
 		cron_script = frappe.get_doc(
 			doctype="Server Script",
-			name="scheduled_script_w_cron",
+			title="scheduled_script_w_cron",
 			script_type="Scheduler Event",
 			script="""frappe.flags = {"test": True}""",
 			event_frequency="Cron",
