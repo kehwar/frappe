@@ -116,6 +116,12 @@ def apply_workflow(doc, action):
 	if not has_approval_access(user, doc, transition):
 		frappe.throw(_("Self approval is not allowed"))
 
+	# Set flag to indicate we're in a workflow transition
+	doc.flags.in_workflow_transition = True
+
+	# Call before_transition hook if defined
+	doc.run_method("before_transition", transition=transition)
+
 	# update workflow state field
 	doc.set(workflow.workflow_state_field, transition.next_state)
 
@@ -146,6 +152,9 @@ def apply_workflow(doc, action):
 		frappe.throw(_("Illegal Document Status for {0}").format(next_state.state))
 
 	doc.add_comment("Workflow", _(next_state.state))
+
+	# Call after_transition hook if defined
+	doc.run_method("after_transition", transition)
 
 	return doc
 
