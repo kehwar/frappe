@@ -104,6 +104,36 @@ doc.disabled =1
 doc.save()
 """,
 	),
+	dict(
+		title="test_before_naming",
+		script_type="DocType Event",
+		doctype_event="Before Naming",
+		reference_doctype="Note",
+		script="""
+# Set a custom name prefix
+doc.flags.custom_naming = True
+""",
+	),
+	dict(
+		title="test_on_change",
+		script_type="DocType Event",
+		doctype_event="Value Change",
+		reference_doctype="ToDo",
+		script="""
+# Track that on_change was called
+doc.flags.on_change_called = True
+""",
+	),
+	dict(
+		title="test_before_change",
+		script_type="DocType Event",
+		doctype_event="Before Value Change",
+		reference_doctype="ToDo",
+		script="""
+# Track that before_change was called
+doc.flags.before_change_called = True
+""",
+	),
 ]
 
 
@@ -343,3 +373,28 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 		cron_script.save()
 		cron_job.reload()
 		self.assertEqual(cron_job.next_execution.day, 2)
+
+	def test_before_naming_event(self):
+		"""Test that Before Naming event is triggered"""
+		note = frappe.get_doc({"doctype": "Note", "title": "Test Naming Script"})
+		note.insert()
+		# Check that the flag was set by the server script
+		self.assertTrue(note.flags.get("custom_naming"))
+
+	def test_on_change_event(self):
+		"""Test that Value Change event is triggered when document is updated"""
+		todo = frappe.get_doc({"doctype": "ToDo", "description": "Original"}).insert()
+		# Update the todo to trigger on_change
+		todo.description = "Updated"
+		todo.save()
+		# Check that on_change was called
+		self.assertTrue(todo.flags.get("on_change_called"))
+
+	def test_before_change_event(self):
+		"""Test that Before Value Change event is triggered when document is updated"""
+		todo = frappe.get_doc({"doctype": "ToDo", "description": "Original"}).insert()
+		# Update the todo to trigger before_change
+		todo.description = "Updated"
+		todo.save()
+		# Check that before_change was called
+		self.assertTrue(todo.flags.get("before_change_called"))
