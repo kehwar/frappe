@@ -1,11 +1,12 @@
 {
  "actions": [],
- "autoname": "Prompt",
+ "autoname": "hash",
  "creation": "2019-09-30 11:56:57.943241",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "title",
   "script_type",
   "reference_doctype",
   "event_frequency",
@@ -26,6 +27,12 @@
   "help_html"
  ],
  "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1
+  },
   {
    "fieldname": "script_type",
    "fieldtype": "Select",
@@ -155,7 +162,7 @@
  "modified_by": "Administrator",
  "module": "Core",
  "name": "Server Script",
- "naming_rule": "Set by user",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
@@ -174,5 +181,7 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1
+ "track_changes": 1,
+ "title_field": "title",
+ "show_title_field_in_link": 1
 }

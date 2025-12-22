@@ -69,8 +69,13 @@ class ServerScript(Document):
 		reference_doctype: DF.Link | None
 		script: DF.Code
 		script_type: DF.Literal["DocType Event", "Scheduler Event", "Permission Query", "API"]
+		title: DF.Data
 
 	# end: auto-generated types
+	def autoname(self):
+		from frappe.model.naming import append_number_if_name_exists
+		self.name = append_number_if_name_exists("Server Script", self.title)
+
 	def validate(self):
 		frappe.only_for("Script Manager", True)
 		self.sync_scheduled_jobs()
