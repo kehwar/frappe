@@ -149,36 +149,6 @@ class TestWorkflow(FrappeTestCase):
 			"invalid python code" in str(se.exception).lower(), msg="Python code validation not working"
 		)
 
-	def test_workflow_transition_hooks(self):
-		"""Test that before_transition and after_transition hooks are called and flag is set"""
-		todo = create_new_todo()
-
-		# Track hook calls
-		hook_calls = []
-
-		def before_transition_hook(transition):
-			hook_calls.append(("before_transition", transition.get("action")))
-			# Check that flag is set before transition
-			self.assertTrue(todo.flags.in_workflow_transition)
-
-		def after_transition_hook(transition):
-			hook_calls.append(("after_transition", transition.get("action")))
-			# Check that flag is still set after transition
-			self.assertTrue(todo.flags.in_workflow_transition)
-
-		# Monkey patch the methods
-		todo.before_transition = before_transition_hook
-		todo.after_transition = after_transition_hook
-
-		# Apply workflow
-		apply_workflow(todo, "Approve")
-
-		# Verify hooks were called in correct order
-		self.assertEqual(len(hook_calls), 2)
-		self.assertEqual(hook_calls[0], ("before_transition", "Approve"))
-		self.assertEqual(hook_calls[1], ("after_transition", "Approve"))
-		self.assertEqual(todo.workflow_state, "Approved")
-
 
 def create_todo_workflow():
 	from frappe.tests.ui_test_helpers import UI_TEST_USER

@@ -17,7 +17,6 @@ class WorkflowTransition(Document):
 		action: DF.Link
 		allow_self_approval: DF.Check
 		allowed: DF.Link
-		auto_apply: DF.Check
 		condition: DF.Code | None
 		next_state: DF.Link
 		parent: DF.Data
