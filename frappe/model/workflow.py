@@ -37,10 +37,7 @@ def get_workflow_name(doctype):
 
 @frappe.whitelist()
 def get_transitions(
-	doc: Union["Document", str, dict],
-	workflow: "Workflow" = None,
-	raise_exception: bool = False,
-	user=None,
+	doc: Union["Document", str, dict], workflow: "Workflow" = None, raise_exception: bool = False
 ) -> list[dict]:
 	"""Return list of possible transitions for the given doc"""
 	from frappe.model.document import Document
@@ -64,8 +61,7 @@ def get_transitions(
 			frappe.throw(_("Workflow State not set"), WorkflowStateError)
 
 	transitions = []
-	user = user or frappe.session.user
-	roles = frappe.get_roles(user)
+	roles = frappe.get_roles()
 
 	for transition in workflow.transitions:
 		if transition.state == current_state and transition.allowed in roles:
@@ -100,29 +96,13 @@ def is_transition_condition_satisfied(transition, doc) -> bool:
 
 
 @frappe.whitelist()
-def apply_workflow(doc, action, update=True, workflow=None, user=None):
-	"""
-	Perform a workflow action on the current document.
-
-	Args:
-		doc: The document to which the workflow action is applied.
-		action: The intended workflow action.
-		update: Whether to update the document after applying the workflow.
-		workflow: Workflow object (optional).
-		user: The user context for the workflow.
-
-	Returns:
-		Updated document after applying the workflow action.
-	"""
-	from frappe.model.document import Document
-
-	if not isinstance(doc, Document):
-		doc = frappe.get_doc(frappe.parse_json(doc))
-		doc.load_from_db()
-
-	workflow = workflow or get_workflow(doc.doctype)
-	user = user or frappe.session.user
-	transitions = get_transitions(doc, workflow, user=user)
+def apply_workflow(doc, action):
+	"""Allow workflow action on the current doc"""
+	doc = frappe.get_doc(frappe.parse_json(doc))
+	doc.load_from_db()
+	workflow = get_workflow(doc.doctype)
+	transitions = get_transitions(doc, workflow)
+	user = frappe.session.user
 
 	# find the transition
 	transition = None
@@ -133,111 +113,48 @@ def apply_workflow(doc, action, update=True, workflow=None, user=None):
 	if not transition:
 		frappe.throw(_("Not a valid Workflow Action"), WorkflowTransitionError)
 
-	return apply_workflow_transition(doc, transition, update=update, workflow=workflow, user=user)
-
-
-def apply_workflow_transition(doc, transition, update=True, workflow=None, user=None):
-	"""
-	Execute a transition as part of the document's workflow.
-
-	Args:
-		doc: The document on which to apply the workflow transition.
-		transition: The transition to apply.
-		update: Whether to save the document after transition.
-		workflow: Workflow object (optional).
-		user: The user context for the workflow.
-
-	Returns:
-		Updated document after applying the workflow transition.
-	"""
-	from frappe.model.document import Document
-
-	if not isinstance(doc, Document):
-		doc = frappe.get_doc(frappe.parse_json(doc))
-		doc.load_from_db()
-
-	workflow = workflow or get_workflow(doc.doctype)
-	user = user or frappe.session.user
-
-	# Check if user has permission for the transition
 	if not has_approval_access(user, doc, transition):
 		frappe.throw(_("Self approval is not allowed"))
 
-	# Track starting state
-	starting_state = doc.get(workflow.workflow_state_field)
-	if not doc.get(f"{workflow.workflow_state_field}_starting"):
-		doc.set(f"{workflow.workflow_state_field}_starting", starting_state)
+	# Set flag to indicate we're in a workflow transition
+	doc.flags.in_workflow_transition = True
 
-	# Update workflow state field in the document
+	# Call before_transition hook if defined
+	doc.run_method("before_transition", transition)
+
+	# update workflow state field
 	doc.set(workflow.workflow_state_field, transition.next_state)
 
-	# Get settings for the next state and update fields accordingly
+	# find settings for the next state
 	next_state = next(d for d in workflow.states if d.state == transition.next_state)
+
+	# update any additional field
 	if next_state.update_field:
 		doc.set(next_state.update_field, next_state.update_value)
 
-	# Update document status based on the workflow's next state
 	new_docstatus = DocStatus(next_state.doc_status or 0)
 	if doc.docstatus.is_draft() and new_docstatus.is_draft():
-		doc.docstatus = new_docstatus
+		doc.save()
 	elif doc.docstatus.is_draft() and new_docstatus.is_submitted():
 		from frappe.core.doctype.submission_queue.submission_queue import queue_submission
 		from frappe.utils.scheduler import is_scheduler_inactive
 
 		if doc.meta.queue_in_background and not is_scheduler_inactive():
 			queue_submission(doc, "Submit")
-			return doc
+			return
 
-		doc.docstatus = new_docstatus
+		doc.submit()
 	elif doc.docstatus.is_submitted() and new_docstatus.is_submitted():
-		doc.docstatus = new_docstatus
+		doc.save()
 	elif doc.docstatus.is_submitted() and new_docstatus.is_cancelled():
-		doc.docstatus = new_docstatus
+		doc.cancel()
 	else:
 		frappe.throw(_("Illegal Document Status for {0}").format(next_state.state))
 
-	# Save document changes and apply scripts based on events
-	if update:
-		# Call before_transition hook if defined
-		doc.run_method("before_transition", transition)
+	doc.add_comment("Workflow", _(next_state.state))
 
-		doc.save(ignore_permissions=True)
-
-		# Add workflow comment
-		doc.add_comment("Workflow", _(doc.get(workflow.workflow_state_field)))
-
-		# Call after_transition hook if defined
-		doc.run_method("after_transition", transition)
-
-	return doc
-
-
-def apply_auto_workflow_transition(doc, update=True, workflow=None, user=None):
-	"""
-	Automatically apply the highest priority workflow transition that is set to auto-apply.
-
-	Args:
-		doc: The document to which the workflow is applied.
-		update: Whether to update the document after transition.
-		workflow: Workflow object (optional).
-		user: The user context for the workflow.
-
-	Returns:
-		Updated document if an auto transition is applied; else, the original document.
-	"""
-	from frappe.model.document import Document
-
-	if not isinstance(doc, Document):
-		doc = frappe.get_doc(frappe.parse_json(doc))
-		doc.load_from_db()
-
-	workflow = workflow or get_workflow(doc.doctype)
-	user = user or frappe.session.user
-
-	transitions = get_transitions(doc, workflow, user=user)
-	for t in transitions:
-		if t.get("auto_apply") == 1:
-			return apply_workflow_transition(doc, t, update=update, workflow=workflow, user=user)
+	# Call after_transition hook if defined
+	doc.run_method("after_transition", transition)
 
 	return doc
 
