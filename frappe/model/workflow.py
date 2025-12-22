@@ -120,7 +120,7 @@ def apply_workflow(doc, action):
 	doc.flags.in_workflow_transition = True
 
 	# Call before_transition hook if defined
-	doc.run_method("before_transition", transition)
+	doc.run_method("before_transition", transition=transition)
 
 	# update workflow state field
 	doc.set(workflow.workflow_state_field, transition.next_state)
