@@ -117,7 +117,7 @@ doc.flags.custom_naming = True
 	dict(
 		title="test_on_change",
 		script_type="DocType Event",
-		doctype_event="Value Change",
+		doctype_event="After Change",
 		reference_doctype="ToDo",
 		script="""
 # Track that on_change was called
@@ -127,11 +127,41 @@ doc.flags.on_change_called = True
 	dict(
 		title="test_before_change",
 		script_type="DocType Event",
-		doctype_event="Before Value Change",
+		doctype_event="Before Change",
 		reference_doctype="ToDo",
 		script="""
 # Track that before_change was called
 doc.flags.before_change_called = True
+""",
+	),
+	dict(
+		title="test_before_save",
+		script_type="DocType Event",
+		doctype_event="After Validate",
+		reference_doctype="ToDo",
+		script="""
+# Track that before_save was called
+doc.flags.before_save_called = True
+""",
+	),
+	dict(
+		title="test_before_export",
+		script_type="DocType Event",
+		doctype_event="Before Export",
+		reference_doctype="ToDo",
+		script="""
+# Track that before_export was called
+doc.flags.before_export_called = True
+""",
+	),
+	dict(
+		title="test_before_import",
+		script_type="DocType Event",
+		doctype_event="Before Import",
+		reference_doctype="ToDo",
+		script="""
+# Track that before_import was called
+doc.flags.before_import_called = True
 """,
 	),
 ]
@@ -382,7 +412,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 		self.assertTrue(note.flags.get("custom_naming"))
 
 	def test_on_change_event(self):
-		"""Test that Value Change event is triggered when document is updated"""
+		"""Test that After Change event is triggered when document is updated"""
 		todo = frappe.get_doc({"doctype": "ToDo", "description": "Original"}).insert()
 		# Update the todo to trigger on_change
 		todo.description = "Updated"
@@ -391,10 +421,17 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 		self.assertTrue(todo.flags.get("on_change_called"))
 
 	def test_before_change_event(self):
-		"""Test that Before Value Change event is triggered when document is updated"""
+		"""Test that Before Change event is triggered when document is updated"""
 		todo = frappe.get_doc({"doctype": "ToDo", "description": "Original"}).insert()
 		# Update the todo to trigger before_change
 		todo.description = "Updated"
 		todo.save()
 		# Check that before_change was called
 		self.assertTrue(todo.flags.get("before_change_called"))
+
+	def test_before_save_event(self):
+		"""Test that After Validate (before_save) event is triggered"""
+		todo = frappe.get_doc({"doctype": "ToDo", "description": "Test Before Save"})
+		todo.insert()
+		# Check that before_save was called
+		self.assertTrue(todo.flags.get("before_save_called"))
