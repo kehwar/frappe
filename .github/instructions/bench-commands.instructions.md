@@ -111,12 +111,38 @@ bench --site development.localhost run-patch --force soldamundo.patches.YYYY.pat
 ### Access Database Console
 
 ```bash
-# MariaDB console
+# MariaDB console (requires existing site)
 bench --site development.localhost mariadb
 
-# Or with full bench console
+# Direct connection to MariaDB as root
+mariadb -h mariadb -u root -p123
+
+# Or with full bench console (Python)
 bench --site development.localhost console
 ```
+
+### Configure MariaDB Runtime Settings
+
+```bash
+# Connect to MariaDB as root
+mariadb -h mariadb -u root -p123
+
+# Then run SQL commands:
+# Set maximum packet size to 512MB (for large backups/restores)
+SET GLOBAL max_allowed_packet=536870912;
+
+# Set InnoDB buffer pool to 6GB (for 8GB total memory allocation)
+SET GLOBAL innodb_buffer_pool_size=6442450944;
+
+# View current settings
+SHOW VARIABLES LIKE 'max_allowed_packet';
+SHOW VARIABLES LIKE 'innodb_buffer_pool_size';
+
+# Exit MariaDB
+EXIT;
+```
+
+**Note**: Runtime settings are lost when the MariaDB container restarts. To make them permanent, add them to `/workspace/.devcontainer/docker-compose.yml` under the `mariadb` service's `command` section.
 
 ## Development Server
 
