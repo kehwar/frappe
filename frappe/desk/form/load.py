@@ -216,7 +216,7 @@ def get_versions(doc: "Document") -> list[dict]:
 	for method in methods_for_all_doctype + methods_for_current_doctype:
 		try:
 			hook_versions = frappe.get_attr(method)(doc)
-			if hook_versions and isinstance(hook_versions, list):
+			if isinstance(hook_versions, list):
 				versions.extend(hook_versions)
 		except Exception:
 			# Log the error but don't break version loading
