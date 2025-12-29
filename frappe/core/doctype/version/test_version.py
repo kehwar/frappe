@@ -152,6 +152,68 @@ class TestVersion(FrappeTestCase):
 			version_names = [v.get("name") for v in versions]
 			self.assertIn("working-version", version_names, "Working hook should still add version despite other hook failing")
 
+	def test_extend_get_versions_hook_invalid_return(self):
+		"""Test that hooks returning non-list values are handled gracefully"""
+		from frappe.desk.form.load import get_versions
+		from frappe.tests.utils import patch_hooks
+
+		# Create a test document
+		t = frappe.get_doc(doctype="ToDo", description="test invalid return")
+		t.save(ignore_version=False)
+
+		def hook_returns_dict(doc):
+			"""Hook that returns a dict instead of list"""
+			return {"name": "invalid"}
+
+		def hook_returns_none(doc):
+			"""Hook that returns None"""
+			return None
+
+		def hook_returns_string(doc):
+			"""Hook that returns string"""
+			return "invalid"
+
+		def valid_hook(doc):
+			"""Hook that returns valid list"""
+			return [
+				{
+					"name": "valid-version",
+					"owner": "test@example.com",
+					"creation": "2023-01-01 12:00:00",
+					"data": '{"test": "valid"}',
+				}
+			]
+
+		# Register the test methods
+		import sys
+
+		test_module = sys.modules[__name__]
+		test_module.hook_returns_dict = hook_returns_dict
+		test_module.hook_returns_none = hook_returns_none
+		test_module.hook_returns_string = hook_returns_string
+		test_module.valid_hook = valid_hook
+
+		# Test that invalid returns are ignored but valid ones work
+		with patch_hooks(
+			{
+				"extend_get_versions": {
+					"ToDo": [
+						"frappe.core.doctype.version.test_version.hook_returns_dict",
+						"frappe.core.doctype.version.test_version.hook_returns_none",
+						"frappe.core.doctype.version.test_version.hook_returns_string",
+						"frappe.core.doctype.version.test_version.valid_hook",
+					]
+				}
+			}
+		):
+			# Should not raise an exception
+			versions = get_versions(t)
+
+			# Only valid hook should add its version
+			version_names = [v.get("name") for v in versions]
+			self.assertIn("valid-version", version_names, "Valid hook should add version")
+			self.assertNotIn("invalid", version_names, "Invalid returns should be ignored")
+
 
 def get_fieldnames(change_array):
 	return [d[0] for d in change_array]
