@@ -38,3 +38,23 @@
 #### Document Info
 
 1. `extend_get_versions:[doctype]` - method to extend or add custom version entries when loading document info. The method receives the document object and should return a list of version-like dictionaries with fields: name, owner, creation, data. Use "*" as doctype to apply to all doctypes.
+
+   Example in hooks.py:
+   ```python
+   extend_get_versions = {
+       "Sales Order": ["myapp.utils.get_custom_versions"],
+       "*": ["myapp.utils.get_all_versions"]
+   }
+   ```
+
+   Example method implementation:
+   ```python
+   def get_custom_versions(doc):
+       # Return list of custom version-like entries
+       return [{
+           "name": "custom-v1",
+           "owner": "user@example.com",
+           "creation": "2023-01-01 12:00:00",
+           "data": '{"custom": "version data"}'
+       }]
+   ```
