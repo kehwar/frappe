@@ -103,6 +103,55 @@ class TestVersion(FrappeTestCase):
 				"custom-version-wildcard", version_names, "Wildcard hook version should be included"
 			)
 
+	def test_extend_get_versions_hook_error_handling(self):
+		"""Test that errors in hook methods don't break get_versions"""
+		from frappe.desk.form.load import get_versions
+		from frappe.tests.utils import patch_hooks
+
+		# Create a test document
+		t = frappe.get_doc(doctype="ToDo", description="test error handling")
+		t.save(ignore_version=False)
+
+		def failing_hook(doc):
+			"""Hook that raises an error"""
+			raise Exception("Test error in hook")
+
+		def working_hook(doc):
+			"""Hook that works correctly"""
+			return [
+				{
+					"name": "working-version",
+					"owner": "test@example.com",
+					"creation": "2023-01-01 12:00:00",
+					"data": '{"test": "working"}',
+				}
+			]
+
+		# Register the test methods
+		import sys
+
+		test_module = sys.modules[__name__]
+		test_module.failing_hook = failing_hook
+		test_module.working_hook = working_hook
+
+		# Test that get_versions still works even if one hook fails
+		with patch_hooks(
+			{
+				"extend_get_versions": {
+					"ToDo": [
+						"frappe.core.doctype.version.test_version.failing_hook",
+						"frappe.core.doctype.version.test_version.working_hook",
+					]
+				}
+			}
+		):
+			# Should not raise an exception
+			versions = get_versions(t)
+
+			# Working hook should still add its version
+			version_names = [v.get("name") for v in versions]
+			self.assertIn("working-version", version_names, "Working hook should still add version despite other hook failing")
+
 
 def get_fieldnames(change_array):
 	return [d[0] for d in change_array]

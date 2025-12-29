@@ -214,7 +214,16 @@ def get_versions(doc: "Document") -> list[dict]:
 	methods_for_current_doctype = hooks.get(doc.doctype, [])
 	
 	for method in methods_for_all_doctype + methods_for_current_doctype:
-		versions.extend(frappe.get_attr(method)(doc) or [])
+		try:
+			hook_versions = frappe.get_attr(method)(doc)
+			if hook_versions:
+				versions.extend(hook_versions)
+		except Exception:
+			# Log the error but don't break version loading
+			frappe.log_error(
+				title=f"Error in extend_get_versions hook: {method}",
+				message=frappe.get_traceback(),
+			)
 	
 	return versions
 
