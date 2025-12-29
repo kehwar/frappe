@@ -48,6 +48,7 @@ class TestVersion(FrappeTestCase):
 	def test_extend_get_versions_hook(self):
 		"""Test that the extend_get_versions hook allows apps to add custom version entries"""
 		from frappe.desk.form.load import get_versions
+		from frappe.tests.utils import patch_hooks
 
 		# Create a test document
 		t = frappe.get_doc(doctype="ToDo", description="test hook")
@@ -76,47 +77,31 @@ class TestVersion(FrappeTestCase):
 				}
 			]
 
-		# Store original hooks
-		original_hooks = frappe.get_hooks("extend_get_versions")
+		# Register the test methods in the current module
+		import sys
 
-		try:
-			# Add test hooks
-			frappe.flags.in_test_hooks = True
-			frappe.local.test_objects = {
-				"extend_get_versions": {"ToDo": ["test_version.custom_versions_for_todo"], "*": ["test_version.custom_versions_for_all"]}
+		test_module = sys.modules[__name__]
+		test_module.custom_versions_for_todo = custom_versions_for_todo
+		test_module.custom_versions_for_all = custom_versions_for_all
+
+		# Test with hooks using patch_hooks utility
+		with patch_hooks(
+			{
+				"extend_get_versions": {
+					"ToDo": ["frappe.core.doctype.version.test_version.custom_versions_for_todo"],
+					"*": ["frappe.core.doctype.version.test_version.custom_versions_for_all"],
+				}
 			}
-
-			# Temporarily override get_hooks to include test hooks
-			original_get_hooks = frappe.get_hooks
-
-			def mock_get_hooks(hook=None, default=None, app_name=None):
-				if hook == "extend_get_versions":
-					return frappe.local.test_objects.get("extend_get_versions", {})
-				return original_get_hooks(hook, default, app_name)
-
-			frappe.get_hooks = mock_get_hooks
-
-			# Register the test methods in frappe namespace to make them accessible
-			import sys
-
-			test_module = sys.modules[__name__]
-			test_module.custom_versions_for_todo = custom_versions_for_todo
-			test_module.custom_versions_for_all = custom_versions_for_all
-
+		):
 			# Get versions - should include custom entries from hooks
 			versions = get_versions(t)
 
 			# Verify that custom versions are included
 			version_names = [v.get("name") for v in versions]
 			self.assertIn("custom-version-1", version_names, "ToDo-specific hook version should be included")
-			self.assertIn("custom-version-wildcard", version_names, "Wildcard hook version should be included")
-
-		finally:
-			# Restore original hooks
-			frappe.get_hooks = original_get_hooks
-			frappe.flags.in_test_hooks = False
-			if hasattr(frappe.local, "test_objects"):
-				delattr(frappe.local, "test_objects")
+			self.assertIn(
+				"custom-version-wildcard", version_names, "Wildcard hook version should be included"
+			)
 
 
 def get_fieldnames(change_array):
