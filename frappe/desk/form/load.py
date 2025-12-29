@@ -208,7 +208,7 @@ def get_versions(doc: "Document") -> list[dict]:
 			order_by="creation desc",
 		)
 	
-	# Allow hooks to extend or modify versions
+	# Allow hooks to extend versions
 	hooks = frappe.get_hooks().get("extend_get_versions", {})
 	methods_for_all_doctype = hooks.get("*", [])
 	methods_for_current_doctype = hooks.get(doc.doctype, [])
