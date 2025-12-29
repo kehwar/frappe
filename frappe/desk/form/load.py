@@ -197,15 +197,26 @@ def get_attachments(dt, dn):
 
 
 def get_versions(doc: "Document") -> list[dict]:
-	if not doc.meta.track_changes:
-		return []
-	return frappe.get_all(
-		"Version",
-		filters=dict(ref_doctype=doc.doctype, docname=str(doc.name)),
-		fields=["name", "owner", "creation", "data"],
-		limit=10,
-		order_by="creation desc",
-	)
+	versions = []
+	
+	if doc.meta.track_changes:
+		versions = frappe.get_all(
+			"Version",
+			filters=dict(ref_doctype=doc.doctype, docname=str(doc.name)),
+			fields=["name", "owner", "creation", "data"],
+			limit=10,
+			order_by="creation desc",
+		)
+	
+	# Allow hooks to extend or modify versions
+	hooks = frappe.get_hooks().get("extend_get_versions", {})
+	methods_for_all_doctype = hooks.get("*", [])
+	methods_for_current_doctype = hooks.get(doc.doctype, [])
+	
+	for method in methods_for_all_doctype + methods_for_current_doctype:
+		versions.extend(frappe.get_attr(method)(doc) or [])
+	
+	return versions
 
 
 @frappe.whitelist()

@@ -34,3 +34,7 @@
 
 1. `permission_query_conditions:[doctype]` - method to return additional query conditions at time of report / list etc.
 1. `has_permission:[doctype]` - method to call permissions to check at individual level
+
+#### Document Info
+
+1. `extend_get_versions:[doctype]` - method to extend or add custom version entries when loading document info. The method receives the document object and should return a list of version-like dictionaries with fields: name, owner, creation, data. Use "*" as doctype to apply to all doctypes.
