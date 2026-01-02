@@ -313,21 +313,28 @@ bench drop-site development.localhost --db-root-password 123
 # 2. Create new site (required for restore)
 bench new-site development.localhost --admin-password admin --db-root-password 123
 
-# 3. Restore from backup
+# 3. Set encryption key from backup (IMPORTANT if site was recreated)
+# Extract encryption_key from the site_config_backup.json
+# Then set it to the new site:
+bench --site development.localhost set-config encryption_key "your-encryption-key-from-backup"
+
+# 4. Restore from backup
 bench --site development.localhost restore \
     --db-root-password 123 \
     "backups/production-database.sql.gz" \
     --with-public-files "backups/production-files.tar"
 
-# 4. Run migrations (if apps have changed)
+# 5. Run migrations (if apps have changed)
 bench --site development.localhost migrate
 
-# 5. Clear cache
+# 6. Clear cache
 bench clear-cache
 
-# 6. Start server
+# 7. Start server
 bench start
 ```
+
+**Important Note**: When a site is recreated (dropped and created), the new site gets a different `encryption_key`. You must copy the `encryption_key` from the backup's `site_config_backup.json` file and set it on the new site using `bench --site development.localhost set-config encryption_key "..."` BEFORE restoring the database. Otherwise, encrypted fields in the database will not be decryptable.
 
 ### Quick Reinstall Apps Workflow
 
