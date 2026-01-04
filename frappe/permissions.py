@@ -918,11 +918,17 @@ def check_write_permission_query_conditions(doc, permtype="write", user=None):
 		# No write permission query conditions defined, allow operation
 		return True
 	
+	# When checking create, also check write
+	permtypes_to_check = [permtype]
+	if permtype == "create":
+		permtypes_to_check.append("write")
+	
 	conditions = []
 	for method in condition_methods:
-		condition = frappe.call(frappe.get_attr(method), user=user, doc=doc)
-		if condition:
-			conditions.append(f"({condition})")
+		for ptype in permtypes_to_check:
+			condition = frappe.call(frappe.get_attr(method), user=user, doc=doc, permtype=ptype)
+			if condition:
+				conditions.append(f"({condition})")
 	
 	if not conditions:
 		# No conditions returned, allow operation
