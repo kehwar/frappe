@@ -29,6 +29,11 @@ from frappe.utils.data import now_datetime
 test_dependencies = ["Blogger", "Blog Post", "User", "Contact", "Salutation"]
 
 
+def test_write_permission_hook(user=None, doc=None):
+	"""Test hook: Only allow records where title starts with 'Allowed'"""
+	return "`title` LIKE 'Allowed%'"
+
+
 class TestPermissions(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -776,11 +781,6 @@ class TestPermissions(FrappeTestCase):
 			]
 		).insert()
 		doctype_name = doctype.name
-		
-		# Create a hook that will deny write permission for certain records
-		def test_write_permission_hook(user=None, doc=None):
-			"""Only allow records where title starts with 'Allowed'"""
-			return "`title` LIKE 'Allowed%'"
 		
 		# Register the hook
 		frappe.get_hooks("get_write_permission_query_conditions")[doctype_name] = [

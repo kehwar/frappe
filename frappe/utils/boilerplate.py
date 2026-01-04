@@ -511,6 +511,10 @@ app_license = "{app_license}"
 # has_permission = {{
 # 	"Event": "frappe.desk.doctype.event.event.has_permission",
 # }}
+#
+# get_write_permission_query_conditions = {{
+# 	"Event": "frappe.desk.doctype.event.event.get_write_permission_query_conditions",
+# }}
 
 # DocType Class
 # ---------------
