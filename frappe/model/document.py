@@ -279,7 +279,7 @@ class Document(BaseDocument):
 			frappe.db.rollback()
 			
 			# Use existing error handling
-			self.raise_no_permission_to(permtype)
+			self._handle_permission_failure(permtype)
 
 	def insert(
 		self,
