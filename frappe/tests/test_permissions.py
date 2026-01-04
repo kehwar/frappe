@@ -764,3 +764,60 @@ class TestPermissions(FrappeTestCase):
 		with self.set_user("test@example.com"):
 			# No one has this role, so user shouldn't have permission.
 			self.assertNotIn(doctype, get_doctypes_with_read())
+
+	def test_write_permission_query_conditions(self):
+		"""Test that write permission query conditions are enforced after DB write"""
+		from frappe.core.doctype.doctype.test_doctype import new_doctype
+		
+		# Create a test doctype with write permissions
+		doctype = new_doctype(
+			permissions=[
+				{"role": "System Manager", "read": 1, "write": 1, "create": 1},
+			]
+		).insert()
+		doctype_name = doctype.name
+		
+		# Create a hook that will deny write permission for certain records
+		def test_write_permission_hook(user=None, doc=None):
+			"""Only allow records where title starts with 'Allowed'"""
+			return "`title` LIKE 'Allowed%'"
+		
+		# Register the hook
+		frappe.get_hooks("get_write_permission_query_conditions")[doctype_name] = [
+			"frappe.tests.test_permissions.test_write_permission_hook"
+		]
+		
+		try:
+			# Test 1: Insert a record that passes the condition - should succeed
+			doc1 = frappe.get_doc({
+				"doctype": doctype_name,
+				"title": "Allowed Document"
+			})
+			doc1.insert()
+			self.assertTrue(frappe.db.exists(doctype_name, doc1.name))
+			
+			# Test 2: Insert a record that fails the condition - should fail
+			doc2 = frappe.get_doc({
+				"doctype": doctype_name,
+				"title": "Denied Document"
+			})
+			with self.assertRaises(frappe.PermissionError):
+				doc2.insert()
+			
+			# Verify the record was not saved (rollback worked)
+			if doc2.name:
+				self.assertFalse(frappe.db.exists(doctype_name, doc2.name))
+			
+			# Test 3: Update a record to fail the condition - should fail
+			doc1.title = "Denied Document"
+			with self.assertRaises(frappe.PermissionError):
+				doc1.save()
+			
+			# Verify the update was not saved (rollback worked)
+			doc1.reload()
+			self.assertEqual(doc1.title, "Allowed Document")
+			
+		finally:
+			# Clean up the hook
+			if doctype_name in frappe.get_hooks("get_write_permission_query_conditions"):
+				del frappe.get_hooks("get_write_permission_query_conditions")[doctype_name]

@@ -891,3 +891,50 @@ def _get_parent_and_ancestors(doctype, parent):
 	from frappe.utils.nestedset import get_ancestors_of
 
 	yield from get_ancestors_of(doctype, parent)
+
+
+def check_write_permission_query_conditions(doc, user=None):
+	"""Check if document passes write permission query conditions.
+	
+	This is called after DB write but before commit to validate the record
+	against custom permission conditions defined via hooks.
+	
+	:param doc: Document object to check
+	:param user: User to check permissions for (defaults to current user)
+	:return: True if document passes, False otherwise
+	"""
+	if not user:
+		user = frappe.session.user
+	
+	if user == "Administrator":
+		return True
+	
+	doctype = doc.doctype
+	hooks = frappe.get_hooks("get_write_permission_query_conditions", {})
+	condition_methods = hooks.get(doctype, []) + hooks.get("*", [])
+	
+	if not condition_methods:
+		# No write permission query conditions defined, allow operation
+		return True
+	
+	conditions = []
+	for method in condition_methods:
+		if condition := frappe.call(frappe.get_attr(method), user=user, doc=doc):
+			conditions.append(f"({condition})")
+	
+	if not conditions:
+		# No conditions returned, allow operation
+		return True
+	
+	# Build query to check if the just-saved record passes the conditions
+	combined_conditions = " and ".join(conditions)
+	
+	# Execute query to check if record exists with the given conditions
+	result = frappe.db.sql(
+		f"""SELECT name FROM `tab{doctype}` 
+		WHERE name = %s AND ({combined_conditions})""",
+		(doc.name,),
+		as_dict=True
+	)
+	
+	return bool(result)

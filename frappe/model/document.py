@@ -258,6 +258,28 @@ class Document(BaseDocument):
 		)
 		raise frappe.PermissionError
 
+	def check_write_permission_query_conditions(self):
+		"""Check if document passes write permission query conditions.
+		
+		This is called after DB write but before commit to validate the record
+		against custom permission conditions defined via hooks.
+		Raises PermissionError if check fails.
+		"""
+		if self.flags.ignore_permissions:
+			return
+		
+		from frappe.permissions import check_write_permission_query_conditions
+		
+		if not check_write_permission_query_conditions(self):
+			# Rollback the transaction
+			frappe.db.rollback()
+			
+			# Raise permission error
+			frappe.flags.error_message = _(
+				"Permission denied. The record does not meet the required write permission conditions."
+			)
+			raise frappe.PermissionError
+
 	def insert(
 		self,
 		ignore_permissions=None,
@@ -322,6 +344,9 @@ class Document(BaseDocument):
 		# children
 		for d in self.get_all_children():
 			d.db_insert()
+
+		# Check write permission query conditions after DB write
+		self.check_write_permission_query_conditions()
 
 		self.run_method("after_insert")
 		self.flags.in_insert = True
@@ -428,6 +453,10 @@ class Document(BaseDocument):
 			self.db_update()
 
 		self.update_children()
+		
+		# Check write permission query conditions after DB write
+		self.check_write_permission_query_conditions()
+		
 		self.run_post_save_methods()
 
 		# clear unsaved flag

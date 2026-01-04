@@ -34,3 +34,4 @@
 
 1. `permission_query_conditions:[doctype]` - method to return additional query conditions at time of report / list etc.
 1. `has_permission:[doctype]` - method to call permissions to check at individual level
+1. `get_write_permission_query_conditions:[doctype]` - method to return query conditions to validate record after write but before commit
