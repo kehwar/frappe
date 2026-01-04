@@ -893,13 +893,14 @@ def _get_parent_and_ancestors(doctype, parent):
 	yield from get_ancestors_of(doctype, parent)
 
 
-def check_write_permission_query_conditions(doc, user=None):
+def check_write_permission_query_conditions(doc, permtype="write", user=None):
 	"""Check if document passes write permission query conditions.
 	
 	This is called after DB write but before commit to validate the record
 	against custom permission conditions defined via hooks.
 	
 	:param doc: Document object to check
+	:param permtype: Permission type being checked (e.g., "create", "write")
 	:param user: User to check permissions for (defaults to current user)
 	:return: True if document passes, False otherwise
 	"""
