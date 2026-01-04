@@ -919,7 +919,8 @@ def check_write_permission_query_conditions(doc, user=None):
 	
 	conditions = []
 	for method in condition_methods:
-		if condition := frappe.call(frappe.get_attr(method), user=user, doc=doc):
+		condition = frappe.call(frappe.get_attr(method), user=user, doc=doc)
+		if condition:
 			conditions.append(f"({condition})")
 	
 	if not conditions:
@@ -929,7 +930,9 @@ def check_write_permission_query_conditions(doc, user=None):
 	# Build query to check if the just-saved record passes the conditions
 	combined_conditions = " and ".join(conditions)
 	
-	# Execute query to check if record exists with the given conditions
+	# Note: The conditions are expected to be SQL fragments returned by trusted hook methods.
+	# These methods should properly escape any user input they include.
+	# The conditions themselves are not user-provided but come from developer-written hooks.
 	result = frappe.db.sql(
 		f"""SELECT name FROM `tab{doctype}` 
 		WHERE name = %s AND ({combined_conditions})""",

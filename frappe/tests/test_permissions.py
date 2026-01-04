@@ -782,10 +782,12 @@ class TestPermissions(FrappeTestCase):
 		).insert()
 		doctype_name = doctype.name
 		
-		# Register the hook
-		frappe.get_hooks("get_write_permission_query_conditions")[doctype_name] = [
-			"frappe.tests.test_permissions.test_write_permission_hook"
-		]
+		# Get the hooks dict and store original value for cleanup
+		hooks_dict = frappe.get_hooks("get_write_permission_query_conditions")
+		original_hooks = hooks_dict.get(doctype_name, [])
+		
+		# Register the test hook
+		hooks_dict[doctype_name] = ["frappe.tests.test_permissions.test_write_permission_hook"]
 		
 		try:
 			# Test 1: Insert a record that passes the condition - should succeed
@@ -818,6 +820,8 @@ class TestPermissions(FrappeTestCase):
 			self.assertEqual(doc1.title, "Allowed Document")
 			
 		finally:
-			# Clean up the hook
-			if doctype_name in frappe.get_hooks("get_write_permission_query_conditions"):
-				del frappe.get_hooks("get_write_permission_query_conditions")[doctype_name]
+			# Restore original hooks state
+			if original_hooks:
+				hooks_dict[doctype_name] = original_hooks
+			elif doctype_name in hooks_dict:
+				del hooks_dict[doctype_name]

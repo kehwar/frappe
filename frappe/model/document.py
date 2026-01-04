@@ -271,7 +271,9 @@ class Document(BaseDocument):
 		from frappe.permissions import check_write_permission_query_conditions
 		
 		if not check_write_permission_query_conditions(self):
-			# Rollback the transaction
+			# Rollback the transaction if in a transaction context
+			# This is safe because Frappe's database layer always uses transactions
+			# for write operations
 			frappe.db.rollback()
 			
 			# Raise permission error
