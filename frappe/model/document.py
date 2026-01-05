@@ -263,9 +263,10 @@ class Document(BaseDocument):
 		
 		This is called after DB write but before commit to validate the record
 		against custom permission conditions defined via hooks.
+		For delete operations, this is called before the record is deleted.
 		Raises PermissionError if check fails.
 		
-		:param permtype: Permission type being checked (e.g., "create", "write")
+		:param permtype: Permission type being checked (e.g., "create", "write", "submit", "cancel", "delete")
 		"""
 		if self.flags.ignore_permissions:
 			return
