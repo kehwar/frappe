@@ -91,6 +91,14 @@ def check_permission_query_conditions_for_doc(doc, user=None, debug=False):
 		return True
 	
 	doctype = doc.doctype
+	
+	# Skip virtual doctypes as they don't have database tables
+	from frappe.model.utils import is_virtual_doctype
+	
+	if is_virtual_doctype(doctype):
+		debug and _debug_log("Skipping permission query conditions check for virtual doctype")
+		return True
+	
 	hooks = frappe.get_hooks("permission_query_conditions", {})
 	condition_methods = hooks.get(doctype, []) + hooks.get("*", [])
 	
