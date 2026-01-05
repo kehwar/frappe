@@ -274,10 +274,10 @@ class Document(BaseDocument):
 		from frappe.permissions import check_write_permission_query_conditions
 		
 		if not check_write_permission_query_conditions(self, permtype=permtype):
-			# Rollback the transaction if in a transaction context
-			# This is safe because Frappe's database layer always uses transactions
-			# for write operations
-			frappe.db.rollback()
+			# Rollback the transaction for write operations (not delete)
+			# Delete operations don't need rollback as nothing was written yet
+			if permtype != "delete":
+				frappe.db.rollback()
 			
 			# Use existing error handling
 			self._handle_permission_failure(permtype)

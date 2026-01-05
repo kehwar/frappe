@@ -912,7 +912,7 @@ def check_write_permission_query_conditions(doc, permtype="write", user=None):
 		return True
 	
 	doctype = doc.doctype
-	hooks = frappe.get_hooks("get_write_permission_query_conditions", {})
+	hooks = frappe.get_hooks("write_permission_query_conditions", {})
 	condition_methods = hooks.get(doctype, []) + hooks.get("*", [])
 	
 	if not condition_methods:
