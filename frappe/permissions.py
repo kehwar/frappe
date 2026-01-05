@@ -918,9 +918,9 @@ def check_write_permission_query_conditions(doc, permtype="write", user=None):
 		# No write permission query conditions defined, allow operation
 		return True
 	
-	# When checking create, also check write
+	# When checking create, submit, or cancel, also check write
 	permtypes_to_check = [permtype]
-	if permtype == "create":
+	if permtype in ("create", "submit", "cancel"):
 		permtypes_to_check.append("write")
 	
 	conditions = []

@@ -456,7 +456,16 @@ class Document(BaseDocument):
 		self.update_children()
 		
 		# Check write permission query conditions after DB write
-		self.check_write_permission_query_conditions(permtype="write")
+		# Determine permtype based on action
+		if self._action == "submit":
+			permtype = "submit"
+		elif self._action == "cancel":
+			permtype = "cancel"
+		elif self._action == "update_after_submit":
+			permtype = "submit"
+		else:
+			permtype = "write"
+		self.check_write_permission_query_conditions(permtype=permtype)
 		
 		self.run_post_save_methods()
 
