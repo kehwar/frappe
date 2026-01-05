@@ -258,6 +258,30 @@ class Document(BaseDocument):
 		)
 		raise frappe.PermissionError
 
+	def check_write_permission_query_conditions(self, permtype="write"):
+		"""Check if document passes write permission query conditions.
+		
+		This is called after DB write but before commit to validate the record
+		against custom permission conditions defined via hooks.
+		For delete operations, this is called before the record is deleted.
+		Raises PermissionError if check fails.
+		
+		:param permtype: Permission type being checked (e.g., "create", "write", "submit", "cancel", "delete")
+		"""
+		if self.flags.ignore_permissions:
+			return
+		
+		from frappe.permissions import check_write_permission_query_conditions
+		
+		if not check_write_permission_query_conditions(self, permtype=permtype):
+			# Rollback the transaction for write operations (not delete)
+			# Delete operations don't need rollback as nothing was written yet
+			if permtype != "delete":
+				frappe.db.rollback()
+			
+			# Use existing error handling
+			self._handle_permission_failure(permtype)
+
 	def insert(
 		self,
 		ignore_permissions=None,
@@ -322,6 +346,9 @@ class Document(BaseDocument):
 		# children
 		for d in self.get_all_children():
 			d.db_insert()
+
+		# Check write permission query conditions after DB write
+		self.check_write_permission_query_conditions(permtype="create")
 
 		self.run_method("after_insert")
 		self.flags.in_insert = True
@@ -428,6 +455,19 @@ class Document(BaseDocument):
 			self.db_update()
 
 		self.update_children()
+		
+		# Check write permission query conditions after DB write
+		# Determine permtype based on action
+		if self._action == "submit":
+			permtype = "submit"
+		elif self._action == "cancel":
+			permtype = "cancel"
+		elif self._action == "update_after_submit":
+			permtype = "submit"
+		else:
+			permtype = "write"
+		self.check_write_permission_query_conditions(permtype=permtype)
+		
 		self.run_post_save_methods()
 
 		# clear unsaved flag
