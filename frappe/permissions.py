@@ -73,6 +73,98 @@ def _pop_debug_log() -> list[str]:
 	return []
 
 
+def check_permission_query_conditions_for_doc(doc, user=None, debug=False):
+	"""Check if a document passes permission query conditions.
+	
+	This validates a document against the permission_query_conditions hook
+	which is typically used by database queries to filter results.
+	
+	:param doc: Document object to check
+	:param user: User to check permissions for (defaults to current user)
+	:param debug: Enable debug logging
+	:return: True if document passes the conditions, False otherwise
+	"""
+	if not user:
+		user = frappe.session.user
+	
+	if user == "Administrator":
+		return True
+	
+	doctype = doc.doctype
+	
+	# Skip virtual doctypes as they don't have database tables
+	from frappe.model.utils import is_virtual_doctype
+	
+	if is_virtual_doctype(doctype):
+		debug and _debug_log("Skipping permission query conditions check for virtual doctype")
+		return True
+	
+	hooks = frappe.get_hooks("permission_query_conditions", {})
+	condition_methods = hooks.get(doctype, []) + hooks.get("*", [])
+	
+	# Also check for server scripts
+	from frappe.core.doctype.server_script.server_script_utils import get_server_script_map
+	
+	if permission_script_name := get_server_script_map().get("permission_query", {}).get(doctype):
+		try:
+			script = frappe.get_doc("Server Script", permission_script_name)
+			if script_condition := script.get_permission_query_conditions(user):
+				# Create a closure to capture the condition value
+				condition_methods.append((lambda cond: lambda u, **kwargs: cond)(script_condition))
+		except Exception:
+			# If script fails to load or execute, we'll skip it
+			pass
+	
+	if not condition_methods:
+		# No permission query conditions defined, allow access
+		debug and _debug_log("No permission query conditions defined for this doctype")
+		return True
+	
+	conditions = []
+	for method in condition_methods:
+		try:
+			if callable(method):
+				condition = method(user, doctype=doctype)
+			else:
+				condition = frappe.call(frappe.get_attr(method), user, doctype=doctype)
+			
+			if condition:
+				conditions.append(f"({condition})")
+		except Exception as e:
+			debug and _debug_log(f"Error getting permission query condition from {method}: {str(e)}")
+			# If a condition method fails, we skip it
+			continue
+	
+	if not conditions:
+		# No conditions returned, allow access
+		debug and _debug_log("Permission query conditions exist but returned no filters")
+		return True
+	
+	# Build query to check if the document passes the conditions
+	combined_conditions = " and ".join(conditions)
+	
+	debug and _debug_log(f"Checking document against permission query conditions: {combined_conditions}")
+	
+	# Note: The conditions are expected to be SQL fragments returned by trusted hook methods.
+	# These methods should properly escape any user input they include.
+	# The conditions themselves are not user-provided but come from developer-written hooks.
+	try:
+		result = frappe.db.sql(
+			f"""SELECT name FROM `tab{doctype}` 
+			WHERE name = %s AND ({combined_conditions})""",
+			(doc.name,),
+			as_dict=True
+		)
+		
+		passes = bool(result)
+		debug and _debug_log(f"Document {'passes' if passes else 'fails'} permission query conditions")
+		return passes
+	except Exception as e:
+		debug and _debug_log(f"Error checking permission query conditions: {str(e)}")
+		# If query fails, deny access to be safe
+		return False
+
+
 @print_has_permission_check_logs
 def has_permission(
 	doctype,
@@ -189,6 +281,18 @@ def has_permission(
 	if not perm and not ignore_share_permissions:
 		debug and _debug_log("Checking if document/doctype is explicitly shared with user")
 		perm = false_if_not_shared()
+
+	# For read and select actions with a document, also check permission query conditions
+	if perm and doc and ptype in ("read", "select"):
+		if not check_permission_query_conditions_for_doc(doc, user, debug=debug):
+			debug and _debug_log("Document does not satisfy permission query conditions")
+			push_perm_check_log(
+				_("User {0} does not have access to this document based on permission query conditions").format(
+					frappe.bold(user)
+				),
+				debug=debug,
+			)
+			perm = False
 
 	return bool(perm)
 
