@@ -898,9 +898,10 @@ def check_write_permission_query_conditions(doc, permtype="write", user=None):
 	
 	This is called after DB write but before commit to validate the record
 	against custom permission conditions defined via hooks.
+	For delete operations, this is called before the record is deleted.
 	
 	:param doc: Document object to check
-	:param permtype: Permission type being checked (e.g., "create", "write")
+	:param permtype: Permission type being checked (e.g., "create", "write", "submit", "cancel", "delete")
 	:param user: User to check permissions for (defaults to current user)
 	:return: True if document passes, False otherwise
 	"""
@@ -918,9 +919,9 @@ def check_write_permission_query_conditions(doc, permtype="write", user=None):
 		# No write permission query conditions defined, allow operation
 		return True
 	
-	# When checking create, submit, or cancel, also check write
+	# When checking create, submit, cancel, or delete, also check write
 	permtypes_to_check = [permtype]
-	if permtype in ("create", "submit", "cancel"):
+	if permtype in ("create", "submit", "cancel", "delete"):
 		permtypes_to_check.append("write")
 	
 	conditions = []
