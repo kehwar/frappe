@@ -620,6 +620,8 @@ VALID_UTILS = (
 	"get_timestamp",
 	"get_eta",
 	"get_system_timezone",
+	"convert_utc_to_timezone",
+	"convert_timezone_to_utc",
 	"convert_utc_to_system_timezone",
 	"now",
 	"nowdate",

@@ -326,6 +326,18 @@ def get_system_timezone() -> str:
 	return frappe.get_system_settings("time_zone") or "Asia/Kolkata"  # Default to India ?!
 
 
+def convert_timezone_to_utc(timestamp):
+	from pytz import UnknownTimeZoneError, timezone
+
+	time_zone = get_system_timezone()
+	if timestamp.tzinfo is None:
+		timestamp = timezone(time_zone).localize(timestamp)
+	try:
+		return timestamp.astimezone(timezone("UTC"))
+	except UnknownTimeZoneError:
+		return timestamp
+
+
 def convert_utc_to_timezone(utc_timestamp, time_zone):
 	from pytz import UnknownTimeZoneError, timezone
 
