@@ -1031,7 +1031,7 @@ def check_write_permission_query_conditions(doc, permtype="write", user=None):
 	conditions = []
 	for method in condition_methods:
 		for ptype in permtypes_to_check:
-			condition = frappe.call(frappe.get_attr(method), user=user, doc=doc, permtype=ptype)
+			condition = frappe.call(frappe.get_attr(method), user=user, doctype=doctype, permtype=ptype)
 			if condition:
 				conditions.append(f"({condition})")
 	
