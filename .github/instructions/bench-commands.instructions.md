@@ -2,6 +2,8 @@
 
 This guide provides commonly used bench commands for development with the `development.localhost` site.
 
+**Keywords**: bench, commands, backup, restore, database, mariadb, mysql, memory limit, migration, site management, innodb, buffer pool, max_allowed_packet, performance tuning
+
 ## Environment Constants
 
 - **Site Name**: `development.localhost`
@@ -121,7 +123,9 @@ mariadb -h mariadb -u root -p123
 bench --site development.localhost console
 ```
 
-### Configure MariaDB Runtime Settings
+### Configure MariaDB Runtime Settings (Memory Limits)
+
+**Required before restoring large backups** to prevent memory/packet size errors.
 
 ```bash
 # Connect to MariaDB as root
@@ -132,6 +136,7 @@ mariadb -h mariadb -u root -p123
 SET GLOBAL max_allowed_packet=536870912;
 
 # Set InnoDB buffer pool to 6GB (for 8GB total memory allocation)
+# Increases MySQL/MariaDB memory limit for better performance
 SET GLOBAL innodb_buffer_pool_size=6442450944;
 
 # View current settings
