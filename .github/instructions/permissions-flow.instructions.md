@@ -88,7 +88,7 @@ permissions = get_doc_permissions(doc, user=None, ptype=None, debug=False)
 
 ### 3. Permission Query Conditions
 
-These are SQL conditions applied to database queries for filtering lists and reports:
+These are SQL conditions applied to database queries for filtering lists and reports, and also checked within `has_permission` for individual document access:
 
 ```python
 # Applied automatically in DatabaseQuery
@@ -101,6 +101,7 @@ conditions = get_permission_query_conditions(user=user, doctype=doctype)
 - Report generation
 - Database queries via `frappe.get_list()` and `frappe.get_all()`
 - Link field searches
+- **Individual document access** - When `has_permission()` is called with a document for read/select operations, these conditions are checked to validate the specific document
 
 ### 4. Write Permission Query Conditions
 
@@ -256,9 +257,9 @@ has_permission = {
 }
 ```
 
-### Hook 2: `permission_query_conditions` - List View Filtering
+### Hook 2: `permission_query_conditions` - List View Filtering and Document Access
 
-**Purpose**: Return SQL WHERE conditions to filter documents in list views, reports, and database queries.
+**Purpose**: Return SQL WHERE conditions to filter documents in list views, reports, and database queries. These conditions are also checked within `has_permission()` when verifying read/select access to individual documents.
 
 **Location**: In your doctype's `.py` file or registered in `hooks.py`
 
@@ -287,13 +288,18 @@ def get_permission_query_conditions(user=None, doctype=None):
 - Return empty string `""` to show all documents (no filtering)
 - Always escape dynamic values with `frappe.db.escape()`
 - Conditions are combined with AND logic
-- Used for read-only filtering (list views, reports)
+- Used for **both** list filtering AND individual document access validation
+- When `has_permission(doctype, "read", doc)` is called, these conditions are checked against the specific document
 - Multiple hooks can be registered and are combined
 
 **Example: Show only documents from user's company**
 ```python
 def get_permission_query_conditions(user=None, doctype=None):
-    """Filter documents by user's company."""
+    """Filter documents by user's company.
+    
+    This will filter list views AND prevent access to individual documents
+    from other companies even if user has role permissions.
+    """
     if not user:
         user = frappe.session.user
         
@@ -309,8 +315,11 @@ def get_permission_query_conditions(user=None, doctype=None):
         return "1=0"
     
     # Escape the company value for SQL safety
+    # This condition will be checked both in lists AND when accessing individual docs
     return f"`tabYour DocType`.`company` = {frappe.db.escape(user_company)}"
 ```
+
+**Important**: When a user tries to open a specific document (e.g., via URL or direct access), `has_permission()` will validate the document against these conditions. If the document doesn't match (e.g., wrong company), access will be denied even if the user has the correct role permissions.
 
 **Example: Show documents based on role and territory**
 ```python
