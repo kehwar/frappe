@@ -119,6 +119,62 @@ check_write_permission_query_conditions(doc, permtype="write", user=None)
 - Cancel operations (`permtype="cancel"`)
 - Delete operations (`permtype="delete"`)
 
+## Child Table Permissions
+
+Child tables (table fields) don't have their own permissions. Instead, permissions are checked on the parent document.
+
+**How it works:**
+1. When checking permission on a child table row, the system automatically looks up the parent document
+2. Permission is checked on the parent doctype
+3. If the child table has a permlevel > 0, the user must have access to that permlevel on the parent
+
+**Example:**
+```python
+# Checking permission on a child table row
+frappe.has_permission(
+    doctype="Sales Order Item",  # Child table
+    ptype="read",
+    doc="SOI-00001",
+    parent_doctype="Sales Order"  # Must specify parent
+)
+# This internally checks: frappe.has_permission("Sales Order", "read", "SO-00001")
+```
+
+**Permission Levels:**
+- Child tables can have permlevel > 0 set on their field in the parent doctype
+- If permlevel > 0, only roles with access to that permlevel can see/edit the child table
+- Useful for sensitive information (e.g., pricing details, internal notes)
+
+## Virtual DocTypes
+
+Virtual doctypes don't have database tables and permission query conditions don't apply to them.
+
+**How it works:**
+1. Virtual doctypes are identified using `frappe.model.utils.is_virtual_doctype()`
+2. Permission query conditions are automatically skipped for virtual doctypes
+3. Only `has_permission` hook and role permissions apply
+
+**Example virtual doctype:**
+```python
+# In your doctype.py
+class YourDocType(Document):
+    @staticmethod
+    def get_list(args):
+        """Custom list implementation for virtual doctype."""
+        # Your custom logic to return list of documents
+        pass
+    
+    @staticmethod
+    def get_count(args):
+        """Return count of documents."""
+        pass
+    
+    @staticmethod
+    def get_stats(args):
+        """Return statistics."""
+        pass
+```
+
 ## Extension Hooks
 
 ### Hook 1: `has_permission` - Controller Permission Check
@@ -435,6 +491,62 @@ return " AND ".join(conditions) if conditions else "1=0"
 - Automatically integrated with permission query flow
 - Useful for rapid prototyping before moving to code
 
+### Hook 5: `has_website_permission` - Website/Portal Access
+
+**Purpose**: Control access to documents on the website/portal (not desk).
+
+**Location**: In your doctype's `.py` file or registered in `hooks.py`
+
+**Signature**:
+```python
+def has_website_permission(doc, ptype="read", user=None):
+    """
+    Check if a website/portal user can access this document.
+    
+    Args:
+        doc: Document instance
+        ptype: Permission type (usually "read" for portal)
+        user: User being checked (portal user)
+        
+    Returns:
+        bool: True if user can access, False otherwise
+    """
+    pass
+```
+
+**Example: Allow customers to view their own orders**
+```python
+def has_website_permission(doc, ptype="read", user=None):
+    """Allow customers to view only their own orders on portal."""
+    if not user:
+        user = frappe.session.user
+    
+    # Get the customer linked to this user
+    customer = frappe.db.get_value("Contact", {"user": user}, "parent_name")
+    
+    # Allow if this order belongs to the customer
+    return doc.customer == customer
+```
+
+**Example: Allow access based on document status**
+```python
+def has_website_permission(doc, ptype="read", user=None):
+    """Only show published content on website."""
+    return doc.published == 1
+```
+
+**Registration in hooks.py:**
+```python
+has_website_permission = {
+    "Your DocType": "your_app.your_module.your_doctype.has_website_permission"
+}
+```
+
+**Notes:**
+- Only applies to website/portal access, not desk
+- Website users are typically customers, suppliers, or other external users
+- Use this for portal pages where documents are displayed to external users
+
 ## User Permissions
 
 User Permissions restrict access to specific document values for link fields.
@@ -498,6 +610,38 @@ is_shared = frappe.share.get_shared(
 - Only applicable for: read, write, share, submit, email, print
 - Checked after role and user permissions
 - Share permission is managed via "DocShare" doctype
+
+## Permission Levels
+
+Permission levels provide field-level access control within a document.
+
+**How it works:**
+1. Each field can have a permlevel (0, 1, 2, etc.)
+2. Users must have role permission with that permlevel to see/edit the field
+3. Permlevel 0 is default and always checked
+4. Higher permlevels are for sensitive fields (e.g., pricing, margins, internal notes)
+
+**Example DocType with Permission Levels:**
+```python
+# Sales Order has fields with different permlevels:
+# - customer, items, delivery_date = permlevel 0 (everyone can see)
+# - discount_percentage = permlevel 1 (only sales managers)
+# - internal_notes = permlevel 2 (only directors)
+```
+
+**Checking Permission Level Access:**
+```python
+# Get which permlevels a user can access
+meta = frappe.get_meta("Sales Order")
+accessible_permlevels = meta.get_permlevel_access("read", user="user@example.com")
+# Returns: [0, 1]  (user can access permlevel 0 and 1, but not 2)
+```
+
+**Use Cases:**
+- Hide pricing from warehouse staff
+- Hide internal notes from customers on portal
+- Restrict cost fields to finance team
+- Show different fields based on role hierarchy
 
 ## Best Practices
 
@@ -641,6 +785,204 @@ conditions = query.get_permission_query_conditions()
 print(f"SQL conditions: {conditions}")
 ```
 
+## Common Issues and Solutions
+
+### Issue 1: User Can't See Documents in List View
+
+**Symptoms:** User has role permission but list view is empty or missing documents
+
+**Possible Causes:**
+1. Permission query conditions are too restrictive
+2. User permissions are blocking access
+3. Share-only access (user can only see explicitly shared documents)
+
+**Solutions:**
+```python
+# Debug: Check what conditions are being applied
+from frappe.model.db_query import DatabaseQuery
+query = DatabaseQuery("Your DocType", user="user@example.com")
+conditions = query.get_permission_query_conditions()
+print(f"Applied conditions: {conditions}")
+
+# Debug: Check user permissions
+from frappe.permissions import get_user_permissions
+user_perms = get_user_permissions("user@example.com")
+print(f"User permissions: {user_perms}")
+
+# Fix: Review and adjust permission_query_conditions hook
+# Fix: Clear unnecessary user permissions
+from frappe.permissions import clear_user_permissions_for_doctype
+clear_user_permissions_for_doctype("Your DocType", "user@example.com")
+```
+
+### Issue 2: Can See Document in List but Can't Open
+
+**Symptoms:** Document appears in list view but "You don't have permission" error when opening
+
+**Possible Causes:**
+1. Has "select" permission but not "read"
+2. `has_permission` hook is denying access
+3. Permission query conditions don't match when checking individual document
+
+**Solutions:**
+```python
+# Debug: Check document permissions
+doc = frappe.get_doc("Your DocType", "DOC-001")
+perms = frappe.permissions.get_doc_permissions(doc, user="user@example.com")
+print(f"Document permissions: {perms}")
+
+# Debug: Enable detailed permission logging
+result = frappe.has_permission("Your DocType", "read", doc, 
+                                user="user@example.com", debug=True)
+# Check logs for details
+
+# Fix: Ensure role has "read" permission, not just "select"
+# Fix: Review has_permission hook logic
+```
+
+### Issue 3: Permission Query Hook Not Working
+
+**Symptoms:** Hook is registered but documents are still not filtered correctly
+
+**Possible Causes:**
+1. Hook not properly registered in hooks.py
+2. Syntax error in SQL condition
+3. Cache not cleared after hook changes
+4. Hook returning None instead of empty string
+
+**Solutions:**
+```python
+# Verify hook registration
+hooks = frappe.get_hooks("permission_query_conditions")
+print(f"Registered hooks: {hooks}")
+
+# Test hook directly
+from your_app.your_module.your_doctype import get_permission_query_conditions
+condition = get_permission_query_conditions(user="user@example.com")
+print(f"Returned condition: {condition}")
+
+# Clear cache
+frappe.clear_cache()
+
+# Correct hook return value
+def get_permission_query_conditions(user):
+    # WRONG: returns None
+    if some_condition:
+        return None
+    
+    # CORRECT: returns empty string for no restrictions
+    if some_condition:
+        return ""
+    
+    return "your_condition"
+```
+
+### Issue 4: Write Operations Fail Silently
+
+**Symptoms:** Document saves without error but changes aren't persisted
+
+**Possible Causes:**
+1. `write_permission_query_conditions` is failing validation
+2. Transaction rollback due to permission check
+3. `before_save` hook blocking changes
+
+**Solutions:**
+```python
+# Debug: Check write permission conditions
+from frappe.permissions import check_write_permission_query_conditions
+can_write = check_write_permission_query_conditions(doc, permtype="write")
+print(f"Can write: {can_write}")
+
+# Enable transaction debugging
+frappe.db.rollback()  # Check if this is called unexpectedly
+
+# Fix: Review write_permission_query_conditions hook
+# Fix: Ensure conditions match the current state of document
+```
+
+### Issue 5: Virtual DocType Permission Issues
+
+**Symptoms:** Permission errors or incorrect filtering on virtual doctypes
+
+**Possible Causes:**
+1. Trying to use permission_query_conditions on virtual doctype
+2. Custom get_list not implementing permission checks
+
+**Solutions:**
+```python
+# Virtual doctypes need custom permission handling
+class YourVirtualDocType(Document):
+    @staticmethod
+    def get_list(args):
+        # Manually check permissions
+        user = frappe.session.user
+        if user == "Administrator":
+            # Return all documents
+            pass
+        else:
+            # Filter based on custom logic
+            pass
+        
+        return filtered_list
+    
+    def has_permission(self, ptype="read", user=None):
+        # Implement custom permission check
+        return True  # or custom logic
+```
+
+### Issue 6: Share Permissions Not Working
+
+**Symptoms:** Shared documents not accessible to users
+
+**Possible Causes:**
+1. Document sharing disabled in System Settings
+2. Wrong permission type specified when sharing
+3. User doesn't have System User role
+
+**Solutions:**
+```python
+# Check if sharing is enabled
+sharing_enabled = not frappe.get_system_settings("disable_document_sharing")
+print(f"Sharing enabled: {sharing_enabled}")
+
+# Verify share exists
+shares = frappe.get_all("DocShare", filters={
+    "share_doctype": "Your DocType",
+    "share_name": "DOC-001",
+    "user": "user@example.com"
+})
+print(f"Shares: {shares}")
+
+# Check user has System User role
+is_system_user = frappe.permissions.is_system_user("user@example.com")
+print(f"Is system user: {is_system_user}")
+```
+
+### Issue 7: Administrator Not Seeing All Documents
+
+**Symptoms:** Even Administrator can't see certain documents
+
+**Possible Causes:**
+1. Filters or conditions applied regardless of user
+2. Virtual doctype with custom filtering
+3. Data permission errors (documents don't exist)
+
+**Solutions:**
+```python
+# Verify Administrator check is first in hook
+def has_permission(doc, ptype, user):
+    # ALWAYS check Administrator first
+    if user == "Administrator":
+        return True
+    
+    # Your custom logic
+    pass
+
+# Check if documents actually exist
+exists = frappe.db.exists("Your DocType", "DOC-001")
+print(f"Document exists: {exists}")
+```
+
 ## Common Patterns
 
 ### Pattern 1: Owner-Only Access
@@ -714,6 +1056,96 @@ def get_permission_query_conditions(user):
     
     companies_str = ", ".join([frappe.db.escape(c) for c in allowed_companies])
     return f"`tabDoc`.`company` IN ({companies_str})"
+```
+
+### Pattern 7: Permission Level Filtering
+
+```python
+def has_permission(doc, ptype, user):
+    """Restrict edit access to sensitive fields based on role."""
+    if ptype in ("write", "submit"):
+        # Check if user has access to permlevel 1 (pricing fields)
+        meta = frappe.get_meta(doc.doctype)
+        accessible_permlevels = meta.get_permlevel_access(ptype, user=user)
+        
+        # If pricing fields were modified, check access
+        if doc.has_value_changed("discount_percentage"):
+            if 1 not in accessible_permlevels:
+                frappe.throw("You don't have permission to modify pricing")
+    
+    return None
+```
+
+### Pattern 8: Child Table Permissions
+
+```python
+# In parent doctype
+def has_permission(doc, ptype, user):
+    """Control access to sensitive child tables."""
+    if ptype == "write":
+        # Check if user can edit the cost details child table
+        meta = frappe.get_meta(doc.doctype)
+        cost_field = meta.get_field("cost_details")
+        
+        if cost_field.permlevel > 0:
+            accessible_permlevels = meta.get_permlevel_access("write", user=user)
+            if cost_field.permlevel not in accessible_permlevels:
+                # User can edit document but not cost details
+                doc.flags.ignore_children_type = ["Cost Details"]
+    
+    return None
+```
+
+### Pattern 9: Conditional Field Visibility
+
+```python
+def has_permission(doc, ptype, user):
+    """Hide certain fields based on document status and user role."""
+    if ptype == "read":
+        roles = frappe.get_roles(user)
+        
+        # Hide internal comments from external users
+        if "Customer" in roles and doc.status != "Completed":
+            doc.internal_comments = None
+        
+        # Hide cost fields from non-finance users
+        if "Accounts User" not in roles:
+            doc.total_cost = None
+            doc.profit_margin = None
+    
+    return None
+```
+
+### Pattern 10: Combined Role and Territory Access
+
+```python
+def get_permission_query_conditions(user):
+    """Complex filtering based on role hierarchy and territory."""
+    roles = frappe.get_roles(user)
+    
+    # Sales Directors see everything
+    if "Sales Director" in roles:
+        return ""
+    
+    conditions = []
+    
+    # Sales Managers see their region
+    if "Sales Manager" in roles:
+        user_region = frappe.db.get_value("User", user, "region")
+        if user_region:
+            conditions.append(f"`tabSales Order`.`region` = {frappe.db.escape(user_region)}")
+    
+    # Sales Users see only their territory within their region
+    if "Sales User" in roles:
+        user_territory = frappe.db.get_value("User", user, "territory")
+        if user_territory:
+            conditions.append(f"`tabSales Order`.`territory` = {frappe.db.escape(user_territory)}")
+    
+    # Always show own documents
+    conditions.append(f"`tabSales Order`.`owner` = {frappe.db.escape(user)}")
+    
+    # Combine with OR logic
+    return "(" + " OR ".join(conditions) + ")" if conditions else "1=0"
 ```
 
 ## Testing Permission Hooks
