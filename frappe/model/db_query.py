@@ -1025,6 +1025,7 @@ from {tables}
 			# Only following cases can require explicit addition of shared documents.
 			#    1. DocType has if_owner constraint and hence can't see shared documents
 			#    2. DocType has user permissions and hence can't see shared documents
+			#    3. Permission query conditions are defined via hooks / server scripts
 			if self._fetch_shared_documents:
 				self.shared = frappe.share.get_shared(self.doctype, self.user)
 
@@ -1037,6 +1038,8 @@ from {tables}
 			doctype_conditions = self.get_permission_query_conditions()
 			if doctype_conditions:
 				conditions += (" and " + doctype_conditions) if conditions else doctype_conditions
+				if not self.shared:
+					self.shared = frappe.share.get_shared(self.doctype, self.user)
 
 			# share is an OR condition, if there is a role permission
 			if not only_if_shared and self.shared and conditions:
