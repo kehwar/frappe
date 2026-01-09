@@ -20,12 +20,15 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
    "options": "Open\nCompleted"
   },
   {
    "fieldname": "reference_name",
    "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Reference Name",
    "options": "reference_doctype"
   },
@@ -33,6 +36,7 @@
    "fieldname": "reference_doctype",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Reference Document Type",
    "options": "DocType"
   },
@@ -47,13 +51,16 @@
   {
    "fieldname": "workflow_state",
    "fieldtype": "Data",
-   "hidden": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Workflow State"
   },
   {
    "depends_on": "eval: doc.completed_by",
    "fieldname": "completed_by",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Completed By User",
    "options": "User",
    "read_only": 1
@@ -78,8 +85,9 @@
    "read_only": 1
   }
  ],
+ "grid_page_length": 50,
  "links": [],
- "modified": "2023-08-28 22:32:58.947849",
+ "modified": "2026-01-09 09:19:19.854796",
  "modified_by": "Administrator",
  "module": "Workflow",
  "name": "Workflow Action",
@@ -91,6 +99,7 @@
    "role": "Desk User"
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
