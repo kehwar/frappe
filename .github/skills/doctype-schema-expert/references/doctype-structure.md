@@ -80,7 +80,7 @@ Complete reference for DocType JSON structure and properties.
 | `show_title_field_in_link` | Int | Show title in link fields |
 | `image_field` | String | Field containing image URL |
 | `timeline_field` | String | Field to link in timeline |
-| `search_fields` | String | Comma-separated fields for search |
+| `search_fields` | String | Comma-separated fields for search. These fields are used for searching in Link field dropdowns and also appear in the displayed records when using the default Link field implementation. |
 | `default_print_format` | String | Default print format name |
 | `sort_field` | String | Default sort field |
 | `sort_order` | String | "ASC" or "DESC" |

@@ -18,6 +18,8 @@ DocTypes are the fundamental building blocks of a Frappe application. Each DocTy
 
 Every DocType is defined by a JSON file (e.g., `doctype_name.json`) that specifies the complete schema.
 
+**Note**: Custom DocTypes created via the UI do not have a .json file on disk. Their definition is stored in the database only. Standard DocTypes (shipped with apps) have JSON files in the codebase.
+
 ## Quick Reference
 
 ### Core DocType Properties

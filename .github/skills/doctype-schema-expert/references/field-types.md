@@ -123,8 +123,24 @@ These fields store actual data in the database.
 - **Type**: Monetary value
 - **Display**: Formatted with currency symbol
 - **Precision**: Configurable (default based on currency)
+- **Options**: Should point to a field that links to a Currency DocType (e.g., `"currency"`)
 - **Use Cases**: Prices, amounts, costs
 - **Example**: Total amount, unit price
+
+```json
+{
+  "fieldname": "currency",
+  "fieldtype": "Link",
+  "label": "Currency",
+  "options": "Currency"
+},
+{
+  "fieldname": "total_amount",
+  "fieldtype": "Currency",
+  "label": "Total Amount",
+  "options": "currency"
+}
+```
 
 #### Percent
 - **Type**: Percentage value

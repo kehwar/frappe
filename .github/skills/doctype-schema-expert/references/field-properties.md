@@ -223,6 +223,7 @@ Complete reference for all properties that can be set on DocType fields.
   - **Code**: Programming language (e.g., `"Python"`, `"JavaScript"`)
   - **Data**: Data type (e.g., `"Email"`, `"Phone"`, `"URL"`)
   - **Table**: Child DocType name
+  - **Currency**: Field name containing the Currency link field (e.g., `"currency"`)
 
 ```json
 // Link field
@@ -230,6 +231,20 @@ Complete reference for all properties that can be set on DocType fields.
   "fieldname": "customer",
   "fieldtype": "Link",
   "options": "Customer"
+}
+
+// Currency field with currency reference
+{
+  "fieldname": "currency",
+  "fieldtype": "Link",
+  "label": "Currency",
+  "options": "Currency"
+},
+{
+  "fieldname": "total",
+  "fieldtype": "Currency",
+  "label": "Total",
+  "options": "currency"
 }
 
 // Select field
