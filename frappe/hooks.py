@@ -137,6 +137,9 @@ has_permission = {
 
 has_website_permission = {"Address": "frappe.contacts.doctype.address.address.has_website_permission"}
 
+filter_workflow_transitions = []
+has_workflow_action_permission = []
+
 jinja = {
 	"methods": "frappe.utils.jinja_globals",
 	"filters": [

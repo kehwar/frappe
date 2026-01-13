@@ -69,6 +69,10 @@ def get_transitions(
 				continue
 			transitions.append(transition.as_dict())
 
+	# Allow custom filtering of transitions
+	for method in frappe.get_hooks("filter_workflow_transitions", []):
+		transitions = frappe.call(method, doc=doc, transitions=transitions, workflow=workflow) or transitions
+
 	return transitions
 
 

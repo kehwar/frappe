@@ -8,12 +8,12 @@ from frappe.desk.notifications import clear_doctype_notifications
 from frappe.email.doctype.email_template.email_template import get_email_template
 from frappe.model.document import Document
 from frappe.model.workflow import (
-	apply_workflow,
-	get_workflow_name,
-	get_workflow_state_field,
-	has_approval_access,
-	is_transition_condition_satisfied,
-	send_email_alert,
+    apply_workflow,
+    get_workflow_name,
+    get_workflow_state_field,
+    has_approval_access,
+    is_transition_condition_satisfied,
+    send_email_alert,
 )
 from frappe.query_builder import DocType
 from frappe.utils import get_datetime, get_url
@@ -32,7 +32,7 @@ class WorkflowAction(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 		from frappe.workflow.doctype.workflow_action_permitted_role.workflow_action_permitted_role import (
-			WorkflowActionPermittedRole,
+		    WorkflowActionPermittedRole,
 		)
 
 		completed_by: DF.Link | None
@@ -341,6 +341,14 @@ def get_users_next_action_data(transitions, doc):
 		filtered_users = [
 			user for user in users if has_approval_access(user, doc, transition) and user_has_permission(user)
 		]
+		
+		# Apply external permission checks
+		for method in frappe.get_hooks("has_workflow_action_permission", []):
+			filtered_users = [
+				user for user in filtered_users
+				if frappe.call(method, user=user, transition=transition, doc=doc)
+			]
+		
 		if doc.get("owner") in filtered_users and not transition.get("send_email_to_creator"):
 			filtered_users.remove(doc.get("owner"))
 		for user in filtered_users:
