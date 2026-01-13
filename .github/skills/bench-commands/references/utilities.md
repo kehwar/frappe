@@ -34,11 +34,30 @@ bench --site development.localhost get-config developer_mode
 ```
 
 ### View All Configuration
+
+**Using show-config command:**
+```bash
+# View as text
+bench --site development.localhost show-config
+
+# View as JSON
+bench --site development.localhost show-config --format json
+```
+
+**Using cat:**
 ```bash
 cat sites/development.localhost/site_config.json
 ```
 
 Shows complete site configuration file.
+
+**Common configurations:**
+- `developer_mode`: Enable developer mode (1 = on, 0 = off)
+- `encryption_key`: Site encryption key
+- `db_name`: Database name
+- `db_password`: Database password
+- `redis_cache`, `redis_queue`, `redis_socketio`: Redis connection strings
+- `mail_server`, `mail_port`, `mail_login`, `mail_password`: Email settings
 
 ## Scheduler Management
 
@@ -104,17 +123,48 @@ bench --site development.localhost set-admin-password admin
 
 Resets Administrator user password to "admin".
 
+**Options:**
+```bash
+# Set specific password
+bench --site development.localhost set-admin-password "new_secure_password"
+
+# Log out all sessions when changing password
+bench --site development.localhost set-admin-password admin --logout-all-sessions
+```
+
 **Use when:**
 - Forgot admin password
 - After restoring backup
 - Initial setup
+- Security incident requiring password reset
 
 ### Set User Password
+
+**Using set-password command:**
 ```bash
-bench --site development.localhost execute "frappe.db.set_value('User', 'user@example.com', 'new_password', 'yourpassword')"
+# Interactive prompt for password
+bench --site development.localhost set-password user@example.com
+
+# Specify password directly
+bench --site development.localhost set-password user@example.com "new_password"
+
+# Log out all user sessions when changing password
+bench --site development.localhost set-password user@example.com "new_password" --logout-all-sessions
 ```
 
-Sets password for specific user via console.
+**Using console (alternative method):**
+```bash
+bench --site development.localhost console
+>>> from frappe.utils.password import update_password
+>>> update_password("user@example.com", "new_password")
+>>> frappe.db.commit()
+```
+
+**Security best practices:**
+- Always use `--logout-all-sessions` when changing passwords after security incidents
+- Use strong passwords (mix of letters, numbers, symbols)
+- Never commit passwords to git repositories
+- Use environment variables for production passwords
 
 ## Version Information
 
@@ -274,75 +324,171 @@ Complete clean reinstall of node_modules.
 
 ## RQ Job Queue Management
 
-### Clear All Jobs
+### Purge Jobs
+
 ```bash
+# Purge all pending jobs for all queues
 bench --site development.localhost purge-jobs
+
+# Purge specific queue
+bench --site development.localhost purge-jobs --queue default
+bench --site development.localhost purge-jobs --queue short
+bench --site development.localhost purge-jobs --queue long
+
+# Purge specific scheduled event type
+bench --site development.localhost purge-jobs --event daily
+bench --site development.localhost purge-jobs --event hourly
+bench --site development.localhost purge-jobs --event weekly
+bench --site development.localhost purge-jobs --event monthly
+bench --site development.localhost purge-jobs --event daily_long
+bench --site development.localhost purge-jobs --event weekly_long
+
+# Purge all scheduled events
+bench --site development.localhost purge-jobs --event all
+
+# Purge for specific site
+bench --site production.example.com purge-jobs --event all
 ```
 
-Purges all jobs from RQ (Redis Queue) including pending, failed, and finished jobs.
+**What it does:**
+- Removes pending periodic/scheduled tasks from queues
+- Clears stuck or old jobs
+- Helps reset job queue state
+- Does NOT affect running jobs
 
-**Use when:**
-- Queue is backed up with old/stuck jobs
-- Jobs are failing repeatedly
-- Need to clear job history
-- Performance issues with job processing
+**Use cases:**
+- Queue backed up with old jobs
+- Testing scheduler without old jobs running
+- After configuration changes
+- Clearing jobs before maintenance
+- Development/testing cleanup
 
-### Clear Failed Jobs Only
-```bash
-bench --site development.localhost clear-failed-jobs
-```
-
-Removes only failed jobs from the queue.
-
-### Clear Specific Queue
-```bash
-bench --site development.localhost clear-queue default
-bench --site development.localhost clear-queue short
-bench --site development.localhost clear-queue long
-```
-
-Clears jobs from a specific queue type.
-
-**Queue Types:**
-- `default` - Standard background jobs
+**Queue types:**
 - `short` - Quick tasks (< 5 minutes)
-- `long` - Long-running tasks (> 5 minutes)
+- `default` - Standard background jobs (5-30 minutes)
+- `long` - Long-running tasks (> 30 minutes)
+
+**Event types:**
+- `all` - All scheduled events
+- `hourly` - Jobs scheduled every hour (e.g., email digest)
+- `daily` - Jobs scheduled daily (e.g., daily reports)
+- `weekly` - Jobs scheduled weekly (e.g., weekly reports)
+- `monthly` - Jobs scheduled monthly (e.g., monthly cleanup)
+- `daily_long` - Long-running daily jobs
+- `weekly_long` - Long-running weekly jobs
+
+**Warning:**
+- Purging removes jobs that haven't run yet
+- Consider consequences before purging in production
+- Some jobs may be important (emails, reports, etc.)
 
 ### Check Queue Status
-```bash
-bench doctor
-```
 
-Shows RQ workers status and queue statistics.
-
-**Alternative (direct Redis):**
-```bash
-redis-cli INFO
-redis-cli KEYS "rq:*"
-```
+See [job-queue.md](job-queue.md) for detailed queue management.
 
 ## Bench Doctor
 
-### Run Diagnostics
+### Run Comprehensive Diagnostics
 ```bash
+# Full diagnostics for specific site
 bench --site development.localhost doctor
+
+# Check specific site (alternative syntax)
+bench doctor --site development.localhost
 ```
 
-Runs comprehensive health check on site.
+**What it checks:**
+1. **Site Health:**
+   - Site exists and is accessible
+   - Database connectivity
+   - Redis connectivity (cache, queue, socketio)
 
-**Checks:**
-- Database connectivity
-- File permissions
-- Scheduler status
-- RQ workers and queue status
-- Memory usage
-- Port availability
+2. **Scheduler Status:**
+   - Enabled/disabled state
+   - Last execution time
+   - Pending scheduled events
 
-**Output includes:**
-- Site configuration
-- Installed apps
-- Database size
-- Error logs
+3. **Worker Status:**
+   - Active workers per queue
+   - Queue depths (short, default, long)
+   - Failed job counts
+
+4. **Queue Statistics:**
+   - Pending jobs in each queue
+   - Currently processing jobs
+   - Failed jobs requiring attention
+
+5. **System Resources:**
+   - Memory usage
+   - Disk space
+   - Database size
+
+6. **Configuration Issues:**
+   - Missing configuration values
+   - Invalid settings
+   - Potential problems
+
+**Example output:**
+```
+Site: development.localhost
+Status: Active ✓
+
+Database:
+  Status: Connected ✓
+  Size: 245 MB
+
+Redis:
+  Cache: Connected ✓
+  Queue: Connected ✓
+  SocketIO: Connected ✓
+
+Scheduler:
+  Status: Enabled ✓
+  Last run: 2 minutes ago
+  Pending events: 0
+
+Workers:
+  short queue: 1 active ✓
+  default queue: 2 active ✓
+  long queue: 1 active ✓
+
+Queues:
+  short: 0 pending
+  default: 3 pending
+  long: 0 pending
+
+Failed Jobs: 0 ✓
+
+Disk Space:
+  Available: 45 GB / 100 GB (45% used)
+
+Memory:
+  Available: 2.1 GB / 4 GB (47% used)
+```
+
+**Use cases:**
+- Troubleshooting performance issues
+- Checking worker/scheduler status
+- Verifying queue health
+- System health monitoring
+- Pre-deployment checks
+
+### Interpreting Doctor Results
+
+**Healthy system indicators:**
+- All connections show "Connected ✓"
+- Scheduler is "Enabled ✓" and recently ran
+- Workers are active for all queues
+- Failed jobs count is 0 or low
+- Queue depths are reasonable (< 100 pending)
+
+**Problem indicators:**
+- "Connection failed" for Redis/Database
+- Scheduler shows "Disabled" or "Not running"
+- No active workers
+- High failed job count (> 10)
+- Queue depth growing (> 500 pending)
+- Low disk space (< 10% available)
 
 ## Helpful Shortcuts
 

@@ -38,6 +38,14 @@ See [references/app-management.md](references/app-management.md) for:
 - Getting apps from repositories
 - Managing multiple apps
 
+### App Development
+See [references/app-development.md](references/app-development.md) for:
+- Creating new Frappe apps
+- Managing app remotes
+- Branch switching and management
+- Dependency validation
+- App development workflows
+
 ### Backup and Restore
 See [references/backup-restore.md](references/backup-restore.md) for:
 - Creating full or database-only backups
@@ -52,6 +60,13 @@ See [references/database-operations.md](references/database-operations.md) for:
 - Accessing database consoles
 - MariaDB runtime configuration (memory limits, packet sizes)
 - Performance tuning for large operations
+
+### Database Maintenance
+See [references/database-maintenance.md](references/database-maintenance.md) for:
+- Removing deleted DocType tables and columns
+- Table analysis and statistics
+- Index management
+- Database optimization
 
 ### Development Operations
 See [references/development-operations.md](references/development-operations.md) for:
@@ -69,6 +84,20 @@ See [references/testing-debugging.md](references/testing-debugging.md) for:
 - Executing Python code
 - Code coverage
 
+### Job Queue Management
+See [references/job-queue.md](references/job-queue.md) for:
+- Starting and managing workers
+- Scheduler control
+- Viewing pending jobs
+- Queue diagnostics and troubleshooting
+
+### Translation Operations
+See [references/translation-operations.md](references/translation-operations.md) for:
+- Complete translation workflow (POT/PO/MO)
+- CSV to PO migration
+- Translation compilation
+- Managing translations for multiple locales
+
 ### Utilities
 See [references/utilities.md](references/utilities.md) for:
 - Setting/getting configuration values
@@ -77,6 +106,16 @@ See [references/utilities.md](references/utilities.md) for:
 - Reloading doctypes
 - Resetting passwords
 - Version checking
+- System diagnostics
+
+### More Commands
+See [references/more-commands.md](references/more-commands.md) for:
+- User management commands
+- Data import/export operations
+- Search and indexing
+- Production setup commands
+- NGINX and SSL configuration
+- And many more specialized commands
 
 ## Common Workflows
 
