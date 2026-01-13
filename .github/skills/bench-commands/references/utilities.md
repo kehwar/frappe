@@ -272,6 +272,55 @@ yarn install
 
 Complete clean reinstall of node_modules.
 
+## RQ Job Queue Management
+
+### Clear All Jobs
+```bash
+bench --site development.localhost purge-jobs
+```
+
+Purges all jobs from RQ (Redis Queue) including pending, failed, and finished jobs.
+
+**Use when:**
+- Queue is backed up with old/stuck jobs
+- Jobs are failing repeatedly
+- Need to clear job history
+- Performance issues with job processing
+
+### Clear Failed Jobs Only
+```bash
+bench --site development.localhost clear-failed-jobs
+```
+
+Removes only failed jobs from the queue.
+
+### Clear Specific Queue
+```bash
+bench --site development.localhost clear-queue default
+bench --site development.localhost clear-queue short
+bench --site development.localhost clear-queue long
+```
+
+Clears jobs from a specific queue type.
+
+**Queue Types:**
+- `default` - Standard background jobs
+- `short` - Quick tasks (< 5 minutes)
+- `long` - Long-running tasks (> 5 minutes)
+
+### Check Queue Status
+```bash
+bench doctor
+```
+
+Shows RQ workers status and queue statistics.
+
+**Alternative (direct Redis):**
+```bash
+redis-cli INFO
+redis-cli KEYS "rq:*"
+```
+
 ## Bench Doctor
 
 ### Run Diagnostics
@@ -285,6 +334,7 @@ Runs comprehensive health check on site.
 - Database connectivity
 - File permissions
 - Scheduler status
+- RQ workers and queue status
 - Memory usage
 - Port availability
 

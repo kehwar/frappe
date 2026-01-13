@@ -73,6 +73,7 @@ See [references/testing-debugging.md](references/testing-debugging.md) for:
 See [references/utilities.md](references/utilities.md) for:
 - Setting/getting configuration values
 - Managing the scheduler
+- RQ job queue management (clearing jobs, purging queues)
 - Reloading doctypes
 - Resetting passwords
 - Version checking
