@@ -129,6 +129,12 @@ These fields store actual data in the database.
 
 ```json
 {
+  "fieldname": "currency",
+  "fieldtype": "Link",
+  "label": "Currency",
+  "options": "Currency"
+},
+{
   "fieldname": "total_amount",
   "fieldtype": "Currency",
   "label": "Total Amount",
