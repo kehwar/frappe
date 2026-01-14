@@ -2,6 +2,22 @@
 
 This guide provides step-by-step instructions for adding custom permissions to existing DocTypes.
 
+## Table of Contents
+
+- [Step 1: Plan Permission Rules](#step-1-plan-permission-rules)
+- [Step 2: Choose Appropriate Hooks](#step-2-choose-appropriate-hooks)
+- [Step 3: Implement Permission Hooks](#step-3-implement-permission-hooks)
+- [Step 4: Test Your Implementation](#step-4-test-your-implementation)
+- [Step 5: Add More Complex Logic](#step-5-add-more-complex-logic-if-needed)
+- [Step 6: Update Role Permissions](#step-6-update-role-permissions)
+- [Step 7: Setup User Permissions](#step-7-setup-user-permissions-if-needed)
+- [Step 8: Write Tests](#step-8-write-tests)
+- [Step 9: Document Your Changes](#step-9-document-your-changes)
+- [Step 10: Deploy and Monitor](#step-10-deploy-and-monitor)
+- [Common Migration Patterns](#common-migration-patterns)
+- [Rollback Plan](#rollback-plan)
+- [Tips for Smooth Migration](#tips-for-smooth-migration)
+
 ## Step 1: Plan Permission Rules
 
 Before implementing, document your permission requirements:

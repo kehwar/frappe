@@ -1,5 +1,25 @@
 # Workflow Permission Hooks
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Hook 1: filter_workflow_transitions](#hook-1-filter_workflow_transitions---custom-transition-filtering)
+  - [Purpose](#purpose)
+  - [Signature](#signature)
+  - [Examples](#examples)
+  - [Registration](#registration-in-hookspy)
+- [Hook 2: has_workflow_action_permission](#hook-2-has_workflow_action_permission---action-level-permission)
+  - [Purpose](#purpose-1)
+  - [Signature](#signature-1)
+  - [Examples](#examples-1)
+  - [Registration](#registration-in-hookspy-1)
+- [Comparison with Standard Permission Hooks](#comparison-with-standard-permission-hooks)
+- [Integration with Standard Permissions](#integration-with-standard-permissions)
+- [Best Practices](#best-practices)
+- [Debugging](#debugging)
+- [Common Patterns](#common-patterns)
+- [Testing](#testing)
+
 ## Overview
 
 Frappe provides two additional hooks specifically for controlling workflow-based permissions and transitions. These hooks extend the standard permission system to provide fine-grained control over workflow actions.

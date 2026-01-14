@@ -91,7 +91,7 @@ def has_permission(doc, ptype=None, user=None, debug=False):
 - Return `False` to explicitly deny permission (overrides role permissions)
 - Return `True` to explicitly grant permission (use with caution)
 
-See [references/has-permission-hook.md](references/has-permission-hook.md) for detailed examples and patterns.
+**When to read:** See [references/has-permission-hook.md](references/has-permission-hook.md) when implementing document-level permission logic with 7 detailed examples covering owner access, team hierarchies, status restrictions, and more.
 
 ### 2. `permission_query_conditions` - List View Filtering and Document Access
 
@@ -113,7 +113,7 @@ def get_permission_query_conditions(user=None, doctype=None):
 
 **Important**: These conditions are checked both in list views AND when accessing individual documents via `has_permission()` for read/select operations.
 
-See [references/permission-query-conditions-hook.md](references/permission-query-conditions-hook.md) for detailed examples and patterns.
+**When to read:** See [references/permission-query-conditions-hook.md](references/permission-query-conditions-hook.md) when implementing list filtering or document access validation with 7 examples including company filtering, role-based regions, time-based access, and multi-tenant patterns.
 
 ### 3. `write_permission_query_conditions` - Post-Write Validation
 
@@ -130,7 +130,7 @@ def get_write_permission_query_conditions(user=None, doctype=None, permtype="wri
     """
 ```
 
-See [references/write-permission-query-conditions-hook.md](references/write-permission-query-conditions-hook.md) for details.
+**When to read:** See [references/write-permission-query-conditions-hook.md](references/write-permission-query-conditions-hook.md) when validating writes before commit with examples for regional restrictions, document age limits, and status-based validation.
 
 ### 4. Server Scripts - Permission Query
 
@@ -140,7 +140,7 @@ See [references/write-permission-query-conditions-hook.md](references/write-perm
 
 **Script Type**: "Permission Query"
 
-See [references/server-scripts.md](references/server-scripts.md) for details.
+**When to read:** See [references/server-scripts.md](references/server-scripts.md) when prototyping permission logic via UI before moving to code, with examples for department filtering and role-based access.
 
 ### 5. `has_website_permission` - Website/Portal Access
 
@@ -148,7 +148,7 @@ See [references/server-scripts.md](references/server-scripts.md) for details.
 
 **Location**: In your doctype's `.py` file or registered in `hooks.py`
 
-See [references/has-website-permission-hook.md](references/has-website-permission-hook.md) for details.
+**When to read:** See [references/has-website-permission-hook.md](references/has-website-permission-hook.md) when implementing portal/website access control with examples for customer orders, published content, and contact relationships.
 
 ## Workflow Permission Hooks
 
@@ -176,7 +176,7 @@ Frappe provides two additional hooks specifically for workflow-based permissions
 - Department or region-based approval routing
 - Amount-based approval limits
 
-See [references/workflow-permission-hooks.md](references/workflow-permission-hooks.md) for detailed examples and patterns.
+**When to read:** See [references/workflow-permission-hooks.md](references/workflow-permission-hooks.md) when implementing workflow transition filtering or approval routing with 10+ examples covering hierarchical approvals, time restrictions, and regional routing.
 
 ## User Permissions
 
@@ -201,7 +201,7 @@ add_user_permission(
 - Limit employees to their branch/department
 - Multi-company access control
 
-See [references/user-permissions.md](references/user-permissions.md) for comprehensive details.
+**When to read:** See [references/user-permissions.md](references/user-permissions.md) when implementing document-level restrictions using User Permissions with comprehensive examples for multi-company, territory, and department-based access.
 
 ## Share Permissions
 
@@ -220,7 +220,7 @@ frappe.share.add(
 )
 ```
 
-See [references/share-permissions.md](references/share-permissions.md) for details.
+**When to read:** See [references/share-permissions.md](references/share-permissions.md) when implementing explicit document sharing between users with examples for collaboration, temporary access, and cross-department workflows.
 
 ## Permission Levels
 
@@ -230,7 +230,7 @@ Permission levels provide field-level access control:
 - Users must have role permission with that permlevel to see/edit the field
 - Permlevel 0 is default and always checked
 
-See [references/permission-levels.md](references/permission-levels.md) for details.
+**When to read:** See [references/permission-levels.md](references/permission-levels.md) when implementing field-level access control with examples for hiding pricing, cost fields, and internal notes from specific roles.
 
 ## Best Practices
 
@@ -258,7 +258,7 @@ See [references/permission-levels.md](references/permission-levels.md) for detai
 3. **Use Constants**: Define permission-related constants
 4. **Consistent Return Values**: Be explicit about what you're returning
 
-See [references/best-practices.md](references/best-practices.md) for comprehensive guidelines.
+**When to read:** See [references/best-practices.md](references/best-practices.md) when writing production-ready permission code with comprehensive guidelines for security, performance, and maintainability.
 
 ## Debugging Permissions
 
@@ -282,11 +282,11 @@ for log in logs:
     print(log)
 ```
 
-See [references/debugging.md](references/debugging.md) for comprehensive debugging guide.
+**When to read:** See [references/debugging.md](references/debugging.md) when troubleshooting permission issues with comprehensive debugging workflows, common scenarios, and logging techniques.
 
 ## Common Issues and Solutions
 
-See [references/common-issues.md](references/common-issues.md) for detailed troubleshooting of:
+**When to read:** See [references/common-issues.md](references/common-issues.md) when facing permission problems with detailed troubleshooting for:
 
 - User Can't See Documents in List View
 - Can See Document in List but Can't Open
@@ -298,7 +298,7 @@ See [references/common-issues.md](references/common-issues.md) for detailed trou
 
 ## Common Patterns
 
-See [references/common-patterns.md](references/common-patterns.md) for ready-to-use patterns including:
+**When to read:** See [references/common-patterns.md](references/common-patterns.md) for 15 ready-to-use permission patterns including:
 
 - Owner-Only Access
 - Role-Based Region Filtering
@@ -313,11 +313,11 @@ See [references/common-patterns.md](references/common-patterns.md) for ready-to-
 
 ## Testing Permission Hooks
 
-See [references/testing.md](references/testing.md) for unit testing examples and patterns.
+**When to read:** See [references/testing.md](references/testing.md) when writing unit and integration tests for permission logic with comprehensive examples and patterns.
 
 ## Migration Guide
 
-See [references/migration-guide.md](references/migration-guide.md) for step-by-step guide on adding permissions to existing DocTypes.
+**When to read:** See [references/migration-guide.md](references/migration-guide.md) for a step-by-step guide when adding custom permissions to existing DocTypes.
 
 ## Core Implementation Files
 

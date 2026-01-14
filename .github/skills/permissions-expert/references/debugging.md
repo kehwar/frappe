@@ -1,5 +1,25 @@
 # Debugging Frappe Permissions
 
+## Table of Contents
+
+- [Enable Debug Mode](#enable-debug-mode)
+- [Check Permission Debug Logs](#check-permission-debug-logs)
+- [Test Permissions as Different User](#test-permissions-as-different-user)
+- [Inspect Role Permissions](#inspect-role-permissions)
+- [Check Permission Query Conditions](#check-permission-query-conditions)
+- [Check User Permissions](#check-user-permissions)
+- [Check Document Permissions](#check-document-permissions)
+- [Check Share Permissions](#check-share-permissions)
+- [Verify Hook Registration](#verify-hook-registration)
+- [Check for Server Scripts](#check-for-server-scripts)
+- [Common Debug Scenarios](#common-debug-scenarios)
+- [Logging and Monitoring](#logging-and-monitoring)
+- [Bench Commands for Debugging](#bench-commands-for-debugging)
+- [Browser Developer Tools](#browser-developer-tools)
+- [Advanced Debugging](#advanced-debugging)
+- [Debugging Checklist](#debugging-checklist)
+- [Tips](#tips)
+
 ## Enable Debug Mode
 
 ### Method 1: Per-Check Debug

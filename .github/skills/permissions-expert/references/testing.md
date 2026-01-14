@@ -1,5 +1,23 @@
 # Testing Permission Hooks
 
+## Table of Contents
+
+- [Unit Tests for Permissions](#unit-tests-for-permissions)
+  - [Basic Test Structure](#basic-test-structure)
+  - [Test 1: User Can Access Own Company Documents](#test-1-user-can-access-own-company-documents)
+  - [Test 2: User Cannot Access Other Company Documents](#test-2-user-cannot-access-other-company-documents)
+  - [Test 3: Permission Query Conditions Filter List Views](#test-3-permission-query-conditions-filter-list-views)
+  - [Test 4: Write Permissions](#test-4-write-permissions)
+  - [Test 5: Share Permissions](#test-5-share-permissions)
+  - [Test 6: Role-Based Permissions](#test-6-role-based-permissions)
+  - [Test 7: Controller Permission Hook](#test-7-controller-permission-hook)
+  - [Test 8: Permission Levels](#test-8-permission-levels)
+- [Test Utilities](#test-utilities)
+- [Integration Tests](#integration-tests)
+- [Performance Tests](#performance-tests)
+- [Best Practices for Testing](#best-practices-for-testing)
+- [Running Tests](#running-tests)
+
 ## Unit Tests for Permissions
 
 ### Basic Test Structure

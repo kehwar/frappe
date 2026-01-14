@@ -1,5 +1,21 @@
 # Common Issues and Solutions
 
+## Table of Contents
+
+- [Issue 1: User Can't See Documents in List View](#issue-1-user-cant-see-documents-in-list-view)
+- [Issue 2: Can See Document in List but Can't Open](#issue-2-can-see-document-in-list-but-cant-open)
+- [Issue 3: Permission Query Hook Not Working](#issue-3-permission-query-hook-not-working)
+- [Issue 4: Write Operations Fail Silently](#issue-4-write-operations-fail-silently)
+- [Issue 5: Virtual DocType Permission Issues](#issue-5-virtual-doctype-permission-issues)
+- [Issue 6: Share Permissions Not Working](#issue-6-share-permissions-not-working)
+- [Issue 7: Administrator Not Seeing All Documents](#issue-7-administrator-not-seeing-all-documents)
+- [Issue 8: User Sees Too Many Documents](#issue-8-user-sees-too-many-documents)
+- [Issue 9: Permission Changes Don't Take Effect](#issue-9-permission-changes-dont-take-effect)
+- [Issue 10: Child Table Fields Not Visible](#issue-10-child-table-fields-not-visible)
+- [Issue 11: Slow List Views](#issue-11-slow-list-views)
+- [Issue 12: PermissionError in API Calls](#issue-12-frappeexceptionspermissionerror-in-api-calls)
+- [Troubleshooting Workflow](#troubleshooting-workflow)
+
 ## Issue 1: User Can't See Documents in List View
 
 **Symptoms:** User has role permission but list view is empty or missing documents

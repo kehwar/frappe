@@ -1,5 +1,15 @@
 # Best Practices for Frappe Permissions
 
+## Table of Contents
+
+- [Security Best Practices](#security-best-practices)
+- [Performance Best Practices](#performance-best-practices)
+- [Maintainability Best Practices](#maintainability-best-practices)
+- [Testing Best Practices](#testing-best-practices)
+- [Code Organization Best Practices](#code-organization-best-practices)
+- [Common Anti-Patterns to Avoid](#common-anti-patterns-to-avoid)
+- [Security Checklist](#security-checklist)
+
 ## Security Best Practices
 
 ### 1. Always Escape User Input

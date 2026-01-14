@@ -2,6 +2,26 @@
 
 This file contains ready-to-use permission patterns for common scenarios.
 
+## Table of Contents
+
+- [Pattern 1: Owner-Only Access](#pattern-1-owner-only-access)
+- [Pattern 2: Role-Based Region Filtering](#pattern-2-role-based-region-filtering)
+- [Pattern 3: Hierarchical Access](#pattern-3-hierarchical-access-teamdepartment)
+- [Pattern 4: Status-Based Restrictions](#pattern-4-status-based-restrictions)
+- [Pattern 5: Time-Based Access](#pattern-5-time-based-access)
+- [Pattern 6: Multi-Tenant Access](#pattern-6-multi-tenant-access)
+- [Pattern 7: Permission Level Filtering](#pattern-7-permission-level-filtering)
+- [Pattern 8: Child Table Permissions](#pattern-8-child-table-permissions)
+- [Pattern 9: Conditional Field Visibility](#pattern-9-conditional-field-visibility)
+- [Pattern 10: Combined Role and Territory Access](#pattern-10-combined-role-and-territory-access)
+- [Pattern 11: Department-Based Access](#pattern-11-department-based-access)
+- [Pattern 12: Approval Workflow Access](#pattern-12-approval-workflow-access)
+- [Pattern 13: Customer Portal Access](#pattern-13-customer-portal-access)
+- [Pattern 14: Project-Based Access](#pattern-14-project-based-access)
+- [Pattern 15: Published/Draft Content](#pattern-15-publisheddraft-content)
+- [Pattern Combination Example](#pattern-combination-example)
+- [Tips for Using Patterns](#tips-for-using-patterns)
+
 ## Pattern 1: Owner-Only Access
 
 Allow only the document owner to access the document.
