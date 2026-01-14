@@ -125,10 +125,12 @@ columns = [
 ```
 
 **Common fieldtypes for columns:**
-- Data, Text, Int, Float, Currency, Percent
-- Date, Datetime, Time
-- Link (requires `options`), Dynamic Link
-- Check (checkbox)
+- **Text**: Data, Small Text, Text, Long Text, Text Editor, HTML Editor, Markdown Editor, Code
+- **Numeric**: Int, Long Int, Float, Currency, Percent
+- **Date/Time**: Date, Datetime, Time, Duration
+- **Relationships**: Link (requires `options`), Dynamic Link
+- **Boolean**: Check
+- **Special**: Attach, Attach Image, Signature, Color, Barcode, Rating, Icon, Geolocation, Phone, Autocomplete, JSON, Password, Read Only
 
 ### Data Format
 

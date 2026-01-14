@@ -64,10 +64,34 @@ More detailed format with all options:
 - Similar to Text in reports
 - Example: `"Content:Long Text:200"`
 
+**Text Editor**
+- Rich text/HTML content (displays as text in reports)
+- Default width: 200px
+- Example: `"Description:Text Editor:200"`
+
+**HTML Editor**
+- HTML formatted content (displays as text in reports)
+- Default width: 200px
+- Example: `"Content:HTML Editor:200"`
+
+**Markdown Editor**
+- Markdown formatted content (displays as text in reports)
+- Default width: 200px
+- Example: `"Notes:Markdown Editor:200"`
+
 **Code**
 - For code snippets or formatted text
 - Displays in monospace font
 - Example: `"Script:Code:200"`
+
+**Password**
+- Encrypted/masked text field
+- Displays as masked in reports
+- Example: `"API Key:Password:150"`
+
+**Read Only**
+- Display-only computed field
+- Example: `"Status:Read Only:100"`
 
 ### Numeric Types
 
@@ -77,6 +101,14 @@ More detailed format with all options:
 - Example: `"Quantity:Int:80"`
 ```python
 {"label": "Quantity", "fieldname": "qty", "fieldtype": "Int", "width": 80}
+```
+
+**Long Int**
+- Large integer numbers
+- Right-aligned
+- Example: `"Transaction ID:Long Int:100"`
+```python
+{"label": "Transaction ID", "fieldname": "transaction_id", "fieldtype": "Long Int", "width": 100}
 ```
 
 **Float**
@@ -207,10 +239,53 @@ More detailed format with all options:
 
 ### Special Types
 
+**Attach**
+- File attachment field
+- Shows file link in report
+- Example: `"Document:Attach:150"`
+```python
+{"label": "Document", "fieldname": "attachment", "fieldtype": "Attach", "width": 150}
+```
+
+**Attach Image**
+- Image attachment with thumbnail
+- Shows image preview in report
+- Example: `"Photo:Attach Image:100"`
+```python
+{"label": "Photo", "fieldname": "image", "fieldtype": "Attach Image", "width": 100}
+```
+
+**Signature**
+- Digital signature field
+- Shows signature image in report
+- Example: `"Signature:Signature:120"`
+
+**Barcode**
+- Barcode value field
+- Example: `"Product Code:Barcode:120"`
+
+**Phone**
+- Phone number field with formatting
+- Example: `"Contact:Phone:120"`
+
+**Geolocation**
+- Latitude/longitude coordinates
+- Example: `"Location:Geolocation:150"`
+
+**JSON**
+- JSON data field
+- Displays as formatted JSON in report
+- Example: `"Metadata:JSON:200"`
+
+**Autocomplete**
+- Text field with autocomplete suggestions
+- Example: `"City:Autocomplete:120"`
+
 **Button**
 - Custom button in cell
 - Requires client-side handler
 - Example: `"Actions:Button:80"`
+- Note: This is primarily for custom interactive reports
 
 **Image**
 - Display image thumbnail
@@ -233,14 +308,10 @@ More detailed format with all options:
 - Star rating display
 - Example: `"Rating:Rating:100"`
 
-**Progress Bar**
-- Progress indicator
-- Value should be 0-100
-- Example: `"Completion:Progress Bar:120"`
-
 **HTML**
-- Raw HTML content
+- Raw HTML content for display
 - Use with caution (XSS risk)
+- Note: Different from HTML Editor fieldtype
 - Example: `"Content:HTML:200"`
 
 ## Column Width Guidelines
@@ -255,11 +326,20 @@ Recommended widths for different content types:
 | Long Text | 200-300 | Descriptions, addresses |
 | Date | 80-100 | Dates without time |
 | Datetime | 140-160 | Dates with time |
+| Time | 80-100 | Time values |
+| Duration | 80-100 | Time durations |
 | Currency | 100-120 | Monetary values |
 | Quantity | 60-80 | Numbers |
 | Percentage | 60-80 | Percentages |
 | Check | 40-60 | Checkboxes |
 | Link | Same as text | Depends on content |
+| Attach/Files | 150-200 | File links |
+| Image | 80-120 | Image thumbnails |
+| Phone | 120-150 | Phone numbers |
+| Barcode | 100-120 | Barcode values |
+| Rating | 100-120 | Star ratings |
+| Color | 60-80 | Color indicators |
+| Icon | 40-60 | Icons |
 
 ## Formatting Options
 
@@ -433,6 +513,32 @@ columns = [
         "options": "reference_type",
         "width": 150
     }
+]
+```
+
+### Document Management Report
+
+```python
+columns = [
+    "Document:Link/File:150",
+    "Attachment:Attach:150",
+    "Image:Attach Image:100",
+    "Barcode:Barcode:120",
+    "Status:Select:100",
+    "Created:Datetime:150"
+]
+```
+
+### Contact Information Report
+
+```python
+columns = [
+    "Name:Data:150",
+    "Phone:Phone:120",
+    "Email:Data:150",
+    "Location:Geolocation:150",
+    "Rating:Rating:100",
+    "Active:Check:60"
 ]
 ```
 
