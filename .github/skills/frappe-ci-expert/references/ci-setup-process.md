@@ -70,14 +70,14 @@ Done in workflow with `actions/setup-node`:
 ```yaml
 - uses: actions/setup-node@v3
   with:
-    node-version: 18
+    node-version: 24
     check-latest: true
 ```
 
 ### Version Requirements
 
 - **Python**: 3.10 or 3.11 (Frappe v14+)
-- **Node.js**: 18+ (Frappe v14+)
+- **Node.js**: 24 (recommended for all Frappe apps)
 - Always use `check-latest: true` for Node to get security updates
 
 ## Stage 3: Bench Installation
