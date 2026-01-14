@@ -151,7 +151,7 @@ When setting up CI for your own app:
 ### Python and Node Versions
 Based on Frappe requirements:
 - Python: 3.10+ (typically 3.10 or 3.11)
-- Node.js: 18+ (use setup-node@v3 with check-latest)
+- Node.js: 24 (use setup-node@v3 or higher with check-latest)
 
 ## Debugging CI Failures
 

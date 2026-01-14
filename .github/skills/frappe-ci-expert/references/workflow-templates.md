@@ -58,7 +58,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 24
           check-latest: true
 
       - name: Add to Hosts
@@ -182,7 +182,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 24
           check-latest: true
 
       - name: Add to Hosts
@@ -274,7 +274,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 24
           check-latest: true
 
       - name: Add to Hosts
@@ -372,7 +372,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 24
           check-latest: true
 
       - name: Add to Hosts
@@ -568,7 +568,7 @@ Official Frappe apps use varying Python and Node versions:
 - name: Install Yarn
   run: npm install -g yarn
 
-# Older apps (ERPNext)
+# Older apps (ERPNext v14 and earlier)
 - name: Setup Python
   uses: actions/setup-python@v2
   with:
@@ -577,7 +577,7 @@ Official Frappe apps use varying Python and Node versions:
 - name: Setup Node
   uses: actions/setup-node@v2
   with:
-    node-version: 18
+    node-version: 24
     check-latest: true
 ```
 
@@ -585,8 +585,8 @@ Official Frappe apps use varying Python and Node versions:
 
 - **Python 3.10-3.11**: Frappe v14-v15
 - **Python 3.14**: Latest Frappe apps (experimental/preview)
-- **Node 18**: Frappe v14
-- **Node 24**: Latest Frappe apps
+- **Node 24**: Recommended for all Frappe apps (v14+)
+- **Node 18**: Legacy support (older Frappe v14 setups)
 - **Always use**: `check-latest: true` for security updates
 
 ### Yarn Installation
