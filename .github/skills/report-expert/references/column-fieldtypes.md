@@ -31,14 +31,22 @@ More detailed format with all options:
     "label": "Display Label",
     "fieldname": "field_name",
     "fieldtype": "Data",
-    "options": "DocType",  # For Link/Select
+    "options": "Configuration",  # Usage varies by fieldtype - see below
     "width": 150,
     "precision": 2,  # For numeric types
     "convertible": "qty"  # For currency conversion
 }
 ```
 
-See [column-fieldproperties.md](column-fieldproperties.md) for detailed property documentation.
+**The "options" property usage varies by field type:**
+- **Link**: Target DocType name (e.g., `"Customer"`)
+- **Dynamic Link**: Field name containing the DocType (e.g., `"reference_type"`)
+- **Select**: Newline-separated choices (e.g., `"Draft\nSubmitted\nCancelled"`)
+- **Currency**: Field name with Currency link (e.g., `"currency"`)
+- **Code**: Language for syntax highlighting (e.g., `"Python"`, `"JavaScript"`)
+- **Data**: Data type specification (e.g., `"Email"`, `"Phone"`, `"URL"`)
+
+See [column-fieldproperties.md](column-fieldproperties.md) for detailed property documentation and examples.
 
 ## Available Fieldtypes
 

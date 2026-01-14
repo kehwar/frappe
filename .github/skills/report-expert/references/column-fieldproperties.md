@@ -11,13 +11,41 @@ When defining columns in dictionary format, you can specify these properties:
     "label": "Display Label",          # Required: Column header text
     "fieldname": "field_name",         # Required: Internal field identifier
     "fieldtype": "Data",               # Required: Field type
-    "options": "DocType",              # Required for Link/Select types
+    "options": "DocType",              # Configuration specific to field type (see below)
     "width": 150,                      # Column width in pixels
     "precision": 2,                    # Decimal places for numeric types
     "convertible": "qty",              # For currency conversion
     "no_total": 1                      # Exclude from totals row
 }
 ```
+
+### The "options" Property
+
+The `options` property is used differently depending on the field type:
+
+**Link Fields:**
+- Target DocType name
+- Example: `"options": "Customer"`
+
+**Dynamic Link Fields:**
+- Field name containing the DocType name
+- Example: `"options": "reference_type"` (where reference_type field contains "Customer", "Supplier", etc.)
+
+**Select Fields:**
+- Newline-separated string of choices
+- Example: `"options": "Draft\nSubmitted\nCancelled"`
+
+**Currency Fields:**
+- Field name containing the Currency link field
+- Example: `"options": "currency"` (references a "currency" field that links to Currency DocType)
+
+**Code Fields:**
+- Programming language for syntax highlighting
+- Example: `"options": "Python"` or `"JavaScript"`, `"HTML"`, `"CSS"`, `"JSON"`
+
+**Data Fields:**
+- Data type specification (rarely used in reports)
+- Example: `"options": "Email"` or `"Phone"`, `"URL"`, `"Barcode"`, `"IBAN"`
 
 ## Column Width Guidelines
 
@@ -47,6 +75,92 @@ Recommended widths for different content types:
 | Icon | 40-60 | Icons |
 
 ## Formatting Options
+
+### Options Property Examples
+
+**Link Field with Options:**
+```python
+{
+    "label": "Customer",
+    "fieldname": "customer",
+    "fieldtype": "Link",
+    "options": "Customer",  # Target DocType
+    "width": 150
+}
+```
+
+**Dynamic Link with Options:**
+```python
+# First, a field specifying the DocType
+{
+    "label": "Reference Type",
+    "fieldname": "reference_type",
+    "fieldtype": "Link",
+    "options": "DocType",
+    "width": 120
+},
+# Then the dynamic link referencing it
+{
+    "label": "Reference Name",
+    "fieldname": "reference_name",
+    "fieldtype": "Dynamic Link",
+    "options": "reference_type",  # Field containing the DocType
+    "width": 150
+}
+```
+
+**Select Field with Options:**
+```python
+{
+    "label": "Status",
+    "fieldname": "status",
+    "fieldtype": "Select",
+    "options": "Draft\nSubmitted\nCancelled",  # Newline-separated
+    "width": 100
+}
+```
+
+**Currency Field with Currency Reference:**
+```python
+# Currency reference field
+{
+    "label": "Currency",
+    "fieldname": "currency",
+    "fieldtype": "Link",
+    "options": "Currency",
+    "width": 80
+},
+# Currency amount using the reference
+{
+    "label": "Amount",
+    "fieldname": "amount",
+    "fieldtype": "Currency",
+    "options": "currency",  # References the currency field
+    "width": 120
+}
+```
+
+**Code Field with Language:**
+```python
+{
+    "label": "Script",
+    "fieldname": "script",
+    "fieldtype": "Code",
+    "options": "Python",  # Syntax highlighting language
+    "width": 300
+}
+```
+
+**Data Field with Type (rarely used in reports):**
+```python
+{
+    "label": "Email",
+    "fieldname": "email",
+    "fieldtype": "Data",
+    "options": "Email",  # Validates email format
+    "width": 150
+}
+```
 
 ### Precision for Numeric Fields
 

@@ -9,7 +9,7 @@ Complete guide to filter properties, configuration options, and advanced feature
 | `fieldname` | Internal name used in Python `filters` dict | Yes | String |
 | `label` | Display label (use `__()` for translation) | Yes | String |
 | `fieldtype` | Type of filter field | Yes | String |
-| `options` | Options for Link/Select fields | Conditional | String/Array |
+| `options` | Configuration specific to field type (see below) | Conditional | String/Array/Function |
 | `default` | Default value | No | Any |
 | `reqd` | 1 for required, 0 for optional | No | Int (0 or 1) |
 | `depends_on` | Show filter conditionally | No | String |
@@ -17,6 +17,101 @@ Complete guide to filter properties, configuration options, and advanced feature
 | `on_change` | Function called when value changes | No | Function |
 | `get_data` | Function to fetch data for MultiSelect | No | Function |
 | `get_options` | Function to get options for Dynamic Link | No | Function |
+
+## The "options" Property
+
+The `options` property is used differently depending on the field type:
+
+**Link Fields:**
+- Target DocType name
+- Example: `options: "Customer"`
+
+**Dynamic Link Fields:**
+- Not directly set; use `get_options` function instead
+- The function returns the DocType based on another filter's value
+
+**Select Fields:**
+- Array of choices OR newline-separated string
+- Example: `options: ["", "Draft", "Submitted", "Cancelled"]`
+- Or: `options: "\nDraft\nSubmitted\nCancelled"`
+
+**MultiSelect/MultiSelectList Fields:**
+- DocType name to select from
+- Example: `options: "Warehouse"`
+
+**Code Fields (rarely used in filters):**
+- Programming language for syntax highlighting
+- Example: `options: "Python"`
+
+**Data Fields (rarely used in filters):**
+- Data type specification
+- Example: `options: "Email"` (for email validation)
+
+### Options Property Examples
+
+**Link Filter:**
+```javascript
+{
+    fieldname: "customer",
+    label: __("Customer"),
+    fieldtype: "Link",
+    options: "Customer"  // Target DocType
+}
+```
+
+**Select Filter with Array:**
+```javascript
+{
+    fieldname: "status",
+    label: __("Status"),
+    fieldtype: "Select",
+    options: ["", "Draft", "Submitted", "Cancelled"],  // Array format
+    default: ""
+}
+```
+
+**Select Filter with String:**
+```javascript
+{
+    fieldname: "priority",
+    label: __("Priority"),
+    fieldtype: "Select",
+    options: "\nLow\nMedium\nHigh",  // Newline-separated string
+    default: ""
+}
+```
+
+**MultiSelect Filter:**
+```javascript
+{
+    fieldname: "warehouses",
+    label: __("Warehouses"),
+    fieldtype: "MultiSelect",
+    options: "Warehouse",  // DocType to select from
+    get_data: function(txt) {
+        return frappe.db.get_link_options("Warehouse", txt);
+    }
+}
+```
+
+**Dynamic Link Filter:**
+```javascript
+{
+    fieldname: "party_type",
+    label: __("Party Type"),
+    fieldtype: "Link",
+    options: "DocType"
+},
+{
+    fieldname: "party",
+    label: __("Party"),
+    fieldtype: "Dynamic Link",
+    // Use get_options instead of options
+    get_options: function() {
+        return frappe.query_report.get_filter_value("party_type");
+    }
+}
+```
 
 ## Default Values
 

@@ -15,7 +15,7 @@ frappe.query_reports["Report Name"] = {
             fieldname: "filter_name",
             label: __("Display Label"),
             fieldtype: "FieldType",
-            options: "Options",  // If applicable
+            options: "Configuration",  // Usage varies by fieldtype - see below
             default: "default_value",
             reqd: 1  // 1 for required, 0 for optional
         }
@@ -23,7 +23,15 @@ frappe.query_reports["Report Name"] = {
 };
 ```
 
-See [filter-fieldproperties.md](filter-fieldproperties.md) for detailed property documentation.
+**The "options" property usage varies by field type:**
+- **Link**: Target DocType name (e.g., `"Customer"`)
+- **Select**: Array or newline-separated string (e.g., `["Draft", "Submitted"]` or `"\nDraft\nSubmitted"`)
+- **MultiSelect**: DocType to select from (e.g., `"Warehouse"`)
+- **Dynamic Link**: Use `get_options` function instead of `options` property
+- **Code**: Language for syntax highlighting (e.g., `"Python"`)
+- **Data**: Data type specification (e.g., `"Email"`)
+
+See [filter-fieldproperties.md](filter-fieldproperties.md) for detailed property documentation and examples.
 
 ## Available Filter Fieldtypes
 
