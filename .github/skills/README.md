@@ -4,6 +4,26 @@ This directory contains reusable skills that extend capabilities for specific do
 
 ## Available Skills
 
+### frappe-ci-expert
+
+Expert guidance for setting up CI/CD tests for Frappe apps using GitHub Actions. Use this when you need help with:
+- Setting up GitHub Actions workflows for Frappe apps
+- Configuring database services (MariaDB, PostgreSQL) for CI
+- Bench initialization and site creation in CI environments
+- Running server tests, UI tests, or parallel tests
+- Troubleshooting CI failures
+
+**Location:** `.github/skills/frappe-ci-expert/`
+
+**Key files:**
+- `SKILL.md` - Main skill documentation and overview
+- `references/workflow-templates.md` - Complete workflow YAML examples
+- `references/database-services.md` - Database service configurations
+- `references/ci-setup-process.md` - Detailed setup steps explanation
+- `references/helper-scripts.md` - Script templates and explanations
+- `references/test-execution.md` - Test running strategies
+- `references/ci-patterns.md` - Best practices and patterns
+
 ### skill-creator
 
 The skill-creator provides comprehensive guidance for creating effective skills. Use this when you want to create a new skill or update an existing skill that extends capabilities with specialized knowledge, workflows, or tool integrations.
