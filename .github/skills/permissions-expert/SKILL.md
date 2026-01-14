@@ -1,6 +1,6 @@
 ---
 name: permissions-expert
-description: Expert guidance on Frappe permissions system including permission evaluation flow, extension hooks (has_permission, permission_query_conditions, write_permission_query_conditions, has_website_permission), role-based permissions, user permissions, share permissions, and permission levels. Use when implementing custom permission logic, troubleshooting permission issues, understanding permission query conditions, working with child table permissions, virtual DocType permissions, or debugging access control problems.
+description: Expert guidance on Frappe permissions system including permission evaluation flow, extension hooks (has_permission, permission_query_conditions, write_permission_query_conditions, has_website_permission, filter_workflow_transitions, has_workflow_action_permission), role-based permissions, user permissions, share permissions, permission levels, and workflow permissions. Use when implementing custom permission logic, troubleshooting permission issues, understanding permission query conditions, working with child table permissions, virtual DocType permissions, workflow transition filtering, approval routing, or debugging access control problems.
 ---
 
 # Frappe Permissions Expert
@@ -66,7 +66,7 @@ frappe.has_permission(
 
 ## Extension Hooks
 
-Frappe provides five main hooks for extending permission logic:
+Frappe provides seven main hooks for extending permission logic:
 
 ### 1. `has_permission` - Controller Permission Check
 
@@ -149,6 +149,34 @@ See [references/server-scripts.md](references/server-scripts.md) for details.
 **Location**: In your doctype's `.py` file or registered in `hooks.py`
 
 See [references/has-website-permission-hook.md](references/has-website-permission-hook.md) for details.
+
+## Workflow Permission Hooks
+
+Frappe provides two additional hooks specifically for workflow-based permissions:
+
+### 6. `filter_workflow_transitions` - Custom Transition Filtering
+
+**Purpose**: Filter and customize the list of available workflow transitions based on custom logic
+
+**Location**: Registered in `hooks.py`
+
+**Use Cases**:
+- Hide specific transitions based on document field values
+- Apply time-based or date-based restrictions
+- Implement dynamic transition visibility
+
+### 7. `has_workflow_action_permission` - Action-Level Permission
+
+**Purpose**: Control which users should receive workflow action notifications and have permission to execute specific actions
+
+**Location**: Registered in `hooks.py`
+
+**Use Cases**:
+- Implement approval hierarchies
+- Department or region-based approval routing
+- Amount-based approval limits
+
+See [references/workflow-permission-hooks.md](references/workflow-permission-hooks.md) for detailed examples and patterns.
 
 ## User Permissions
 
