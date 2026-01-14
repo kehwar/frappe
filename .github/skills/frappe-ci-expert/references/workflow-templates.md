@@ -86,6 +86,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
       - name: Install Dependencies
         run: |
           bash ${GITHUB_WORKSPACE}/.github/helper/install_dependencies.sh
@@ -533,6 +544,78 @@ Always include log output steps:
             echo "Printing log: $f"
             cat $f
           done
+```
+
+## Python and Node.js Versions
+
+### Current Recommendations
+
+Official Frappe apps use varying Python and Node versions:
+
+```yaml
+# Modern apps (Helpdesk, CRM)
+- name: Setup Python
+  uses: actions/setup-python@v5  # or v6
+  with:
+    python-version: '3.14'
+
+- name: Setup Node
+  uses: actions/setup-node@v6
+  with:
+    node-version: 24
+    check-latest: true
+
+- name: Install Yarn
+  run: npm install -g yarn
+
+# Older apps (ERPNext)
+- name: Setup Python
+  uses: actions/setup-python@v2
+  with:
+    python-version: '3.11'
+
+- name: Setup Node
+  uses: actions/setup-node@v2
+  with:
+    node-version: 18
+    check-latest: true
+```
+
+### Version Guidelines
+
+- **Python 3.10-3.11**: Frappe v14-v15
+- **Python 3.14**: Latest Frappe apps (experimental/preview)
+- **Node 18**: Frappe v14
+- **Node 24**: Latest Frappe apps
+- **Always use**: `check-latest: true` for security updates
+
+### Yarn Installation
+
+Modern workflows explicitly install yarn globally:
+
+```yaml
+- name: Install Yarn
+  run: npm install -g yarn
+```
+
+This ensures yarn is available even with newer Node versions.
+
+### Action Versions
+
+Use the latest stable versions for better features and security:
+
+```yaml
+# Latest versions
+uses: actions/checkout@v6
+uses: actions/setup-python@v6
+uses: actions/setup-node@v6
+uses: actions/cache@v4
+
+# Older but still supported
+uses: actions/checkout@v4
+uses: actions/setup-python@v4
+uses: actions/setup-node@v3
+uses: actions/cache@v3
 ```
 
 ## Performance Optimization

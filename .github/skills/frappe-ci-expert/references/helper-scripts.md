@@ -8,19 +8,21 @@ This reference provides templates and explanations for CI helper scripts used in
 
 ```
 .github/
-├── helper/
-│   ├── install_dependencies.sh   # System packages
+├── helper/          # or helpers/ (some apps use plural)
 │   ├── install.sh                 # Bench setup and site installation
-│   └── db/
-│       ├── mariadb.json          # MariaDB site config
-│       └── postgres.json         # PostgreSQL site config
+│   ├── site_config.json           # OR site_config_mariadb.json
+│   └── site_config_postgres.json  # (if supporting multiple databases)
 └── workflows/
     └── server-tests.yml
 ```
 
+**Note**: Official apps vary in directory naming:
+- ERPNext, CRM: `.github/helper/`
+- Helpdesk: `.github/helpers/` (plural)
+
 ## install_dependencies.sh
 
-Installs system-level dependencies required for Frappe.
+Installs system-level dependencies required for Frappe. Note that some official apps integrate this into `install.sh` instead of a separate file.
 
 ### Complete Script
 
@@ -30,17 +32,29 @@ set -e
 
 echo "Setting Up System Dependencies..."
 
-echo "::group::apt packages"
 sudo apt update
 sudo apt remove mysql-server mysql-client
-sudo apt install libcups2-dev redis-server mariadb-client
+sudo apt install libcups2-dev redis-server mariadb-client libmariadb-dev
 
 install_wkhtmltopdf() {
   wget -q https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb
   sudo apt install ./wkhtmltox_0.12.6.1-2.jammy_amd64.deb
 }
 install_wkhtmltopdf &
-echo "::endgroup::"
+```
+
+### Alternative wkhtmltopdf Installation (tar.xz method)
+
+Some official apps (Helpdesk, CRM) use this method:
+
+```bash
+install_whktml() {
+    wget -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz
+    tar -xf /tmp/wkhtmltox.tar.xz -C /tmp
+    sudo mv /tmp/wkhtmltox/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf
+    sudo chmod o+x /usr/local/bin/wkhtmltopdf
+}
+install_whktml &
 ```
 
 ### What This Does
@@ -48,6 +62,10 @@ echo "::endgroup::"
 1. **Updates package lists**: `sudo apt update`
 2. **Removes conflicting MySQL**: Prevents port conflicts with containerized database
 3. **Installs essential packages**:
+   - `libcups2-dev`: CUPS library for PDF generation
+   - `redis-server`: Redis for caching and background jobs
+   - `mariadb-client`: MySQL/MariaDB command-line client
+   - `libmariadb-dev`: MariaDB development libraries (required for some Python packages)
    - `libcups2-dev`: CUPS library for PDF generation
    - `redis-server`: Redis for caching and background jobs
    - `mariadb-client`: MySQL/MariaDB command-line client

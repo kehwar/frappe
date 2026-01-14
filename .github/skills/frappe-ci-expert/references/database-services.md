@@ -6,12 +6,14 @@ This reference covers database service configuration for Frappe CI testing, incl
 
 ### Basic Configuration
 
+Note: Official Frappe apps use `mysql` as the service name even when using MariaDB.
+
 ```yaml
 services:
-  mariadb:
-    image: mariadb:10.6.24
+  mysql:  # Service name can be 'mysql' or 'mariadb'
+    image: mariadb:10.6
     env:
-      MARIADB_ROOT_PASSWORD: travis
+      MARIADB_ROOT_PASSWORD: root  # Or MYSQL_ROOT_PASSWORD: root
     ports:
       - 3306:3306
     options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
@@ -19,11 +21,12 @@ services:
 
 ### Configuration Details
 
-- **Image**: `mariadb:10.6.24` - Stable version compatible with Frappe
-- **Root Password**: `travis` - Standard password used in Frappe CI
+- **Image**: `mariadb:10.6` - Stable version compatible with Frappe
+- **Root Password**: `root` - Standard password used in official Frappe apps (some older examples use `travis`)
 - **Port**: Maps container port 3306 to host port 3306
+- **Service Name**: Can be `mysql` or `mariadb` (official apps use `mysql`)
 - **Health Check**: Ensures database is ready before tests start
-  - Command: `mysqladmin ping`
+  - Command: `mysqladmin ping` or `mariadb-admin ping`
   - Interval: Check every 5 seconds
   - Timeout: 2 seconds per check
   - Retries: 3 attempts before marking unhealthy
@@ -32,7 +35,7 @@ services:
 
 ```yaml
 # MariaDB 10.6 (recommended for Frappe v14+)
-image: mariadb:10.6.24
+image: mariadb:10.6
 
 # MariaDB 11.0+ (for newer Frappe versions)
 image: mariadb:11.0
@@ -192,7 +195,7 @@ services:
 
 ### MariaDB Site Config
 
-Create `.github/helper/db/mariadb.json`:
+Create `.github/helper/db/mariadb.json` (or `.github/helper/site_config_mariadb.json` in some apps):
 
 ```json
 {
@@ -203,14 +206,15 @@ Create `.github/helper/db/mariadb.json`:
     "allow_tests": true,
     "db_type": "mariadb",
     "auto_email_id": "test@example.com",
-    "mail_server": "localhost",
-    "mail_port": 2525,
+    "mail_server": "smtp.example.com",
     "mail_login": "test@example.com",
     "mail_password": "test",
     "admin_password": "admin",
     "root_login": "root",
-    "root_password": "travis",
+    "root_password": "root",
     "host_name": "http://test_site:8000",
+    "install_apps": ["your_app_name"],
+    "throttle_user_limit": 100,
     "monitor": 1,
     "server_script_enabled": true
 }
@@ -218,7 +222,7 @@ Create `.github/helper/db/mariadb.json`:
 
 ### PostgreSQL Site Config
 
-Create `.github/helper/db/postgres.json`:
+Create `.github/helper/db/postgres.json` (or `.github/helper/site_config_postgres.json`):
 
 ```json
 {
@@ -229,14 +233,15 @@ Create `.github/helper/db/postgres.json`:
     "db_type": "postgres",
     "allow_tests": true,
     "auto_email_id": "test@example.com",
-    "mail_server": "localhost",
-    "mail_port": 2525,
+    "mail_server": "smtp.example.com",
     "mail_login": "test@example.com",
     "mail_password": "test",
     "admin_password": "admin",
     "root_login": "postgres",
-    "root_password": "travis",
+    "root_password": "root",
     "host_name": "http://test_site:8000",
+    "install_apps": ["your_app_name"],
+    "throttle_user_limit": 100,
     "server_script_enabled": true
 }
 ```
@@ -252,8 +257,23 @@ Create `.github/helper/db/postgres.json`:
 | `db_type` | Database type | `mariadb` or `postgres` |
 | `allow_tests` | Enable test mode | Must be `true` for CI |
 | `auto_email_id` | Default email for test users | Any test email address |
-| `mail_server` | SMTP server | `localhost` when using smtp4dev service |
-| `mail_port` | SMTP port | `2525` for smtp4dev |
+| `mail_server` | SMTP server | `smtp.example.com` or `localhost` with smtp4dev |
+| `mail_port` | SMTP port | `2525` for smtp4dev, `25` for standard SMTP |
+| `admin_password` | Admin user password | Used for logging in |
+| `root_login` | Database root user | `root` for MariaDB, `postgres` for PostgreSQL |
+| `root_password` | Database root password | Must match service configuration (`root` in official apps) |
+| `host_name` | Site URL | Used for URL generation |
+| `install_apps` | Apps to install on site | Array of app names to auto-install |
+| `throttle_user_limit` | Rate limit for testing | Set to `100` to avoid throttling in tests |
+| `monitor` | Enable monitoring | Optional, helps with debugging |
+| `server_script_enabled` | Enable server scripts | Required for some tests |
+
+### Important Site Config Notes
+
+1. **install_apps field**: Official Frappe apps include this to automatically install apps during site creation
+2. **throttle_user_limit**: Prevents rate limiting during test execution
+3. **Root password**: Most official apps use `root` (not `travis`) for database root password
+4. **Mail server**: Use `smtp.example.com` for dummy server (no actual emails sent in tests)
 | `admin_password` | Admin user password | Used for logging in |
 | `root_login` | Database root user | `root` for MariaDB, `postgres` for PostgreSQL |
 | `root_password` | Database root password | Must match service configuration |
@@ -270,13 +290,13 @@ In your install script, create the database and user:
 ```bash
 if [ "$DB" == "mariadb" ]
 then
-  mariadb --host 127.0.0.1 --port 3306 -u root -ptravis -e "SET GLOBAL character_set_server = 'utf8mb4'";
-  mariadb --host 127.0.0.1 --port 3306 -u root -ptravis -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'";
+  mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL character_set_server = 'utf8mb4'";
+  mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'";
 
-  mariadb --host 127.0.0.1 --port 3306 -u root -ptravis -e "CREATE DATABASE test_frappe";
-  mariadb --host 127.0.0.1 --port 3306 -u root -ptravis -e "CREATE USER 'test_frappe'@'localhost' IDENTIFIED BY 'test_frappe'";
-  mariadb --host 127.0.0.1 --port 3306 -u root -ptravis -e "GRANT ALL PRIVILEGES ON \`test_frappe\`.* TO 'test_frappe'@'localhost'";
-  mariadb --host 127.0.0.1 --port 3306 -u root -ptravis -e "FLUSH PRIVILEGES";
+  mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "CREATE USER 'test_frappe'@'localhost' IDENTIFIED BY 'test_frappe'";
+  mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "CREATE DATABASE test_frappe";
+  mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "GRANT ALL PRIVILEGES ON \`test_frappe\`.* TO 'test_frappe'@'localhost'";
+  mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "FLUSH PRIVILEGES";
 fi
 ```
 
@@ -285,8 +305,8 @@ fi
 ```bash
 if [ "$DB" == "postgres" ]
 then
-  echo "travis" | psql -h 127.0.0.1 -p 5432 -c "CREATE DATABASE test_frappe" -U postgres;
-  echo "travis" | psql -h 127.0.0.1 -p 5432 -c "CREATE USER test_frappe WITH PASSWORD 'test_frappe'" -U postgres;
+  echo "root" | psql -h 127.0.0.1 -p 5432 -c "CREATE DATABASE test_frappe" -U postgres;
+  echo "root" | psql -h 127.0.0.1 -p 5432 -c "CREATE USER test_frappe WITH PASSWORD 'test_frappe'" -U postgres;
 fi
 ```
 
@@ -294,21 +314,23 @@ fi
 
 ### Standard CI Credentials
 
-All Frappe CI workflows use these standard credentials:
+Official Frappe apps use these standard credentials:
 
 | Component | Username/Login | Password |
 |-----------|----------------|----------|
-| MariaDB Root | `root` | `travis` |
-| PostgreSQL Root | `postgres` | `travis` |
+| MariaDB Root | `root` | `root` |
+| PostgreSQL Root | `postgres` | `root` |
 | Test Database User | `test_frappe` | `test_frappe` |
 | Test Database Name | `test_frappe` | N/A |
 | Frappe Admin | `Administrator` | `admin` |
 | Test Site Name | `test_site` | N/A |
 | SMTP (smtp4dev) | `test@example.com` | `test` |
 
+**Note**: Older Frappe CI examples may use `travis` as the root password, but official apps now use `root`.
+
 ### Why These Credentials?
 
-- **Standardization**: Consistent across all Frappe projects
+- **Standardization**: Consistent across official Frappe projects
 - **Non-sensitive**: Safe for public CI environments
 - **Test-only**: Never used in production
 - **Easy to remember**: Simplifies debugging and maintenance

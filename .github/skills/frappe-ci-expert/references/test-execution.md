@@ -4,6 +4,17 @@ This reference covers running tests in CI environments, including parallel tests
 
 ## Server Tests
 
+### Enabling Tests
+
+Before running tests, ensure tests are enabled on the site:
+
+```bash
+# Set allow_tests config (required for some apps)
+bench --site test_site set-config allow_tests true
+```
+
+Some official apps (like CRM) require this configuration before running tests.
+
 ### Parallel Test Execution
 
 The standard way to run Frappe tests in CI:
@@ -11,6 +22,26 @@ The standard way to run Frappe tests in CI:
 ```bash
 bench --site test_site run-parallel-tests --app your_app_name
 ```
+
+### Test Orchestrator (Advanced)
+
+ERPNext uses a test orchestrator for distributed testing:
+
+```bash
+bench --site test_site run-parallel-tests \
+  --app erpnext \
+  --total-builds 4 \
+  --build-number ${{ matrix.container }}
+```
+
+With environment variables:
+```yaml
+env:
+  CI_BUILD_ID: ${{ github.run_id }}
+  ORCHESTRATOR_URL: http://test-orchestrator.frappe.io
+```
+
+This distributes tests across multiple CI runners for faster execution.
 
 ### What This Does
 
@@ -25,6 +56,9 @@ bench --site test_site run-parallel-tests --app your_app_name
 # Basic usage
 bench --site test_site run-parallel-tests --app your_app_name
 
+# With orchestrator
+bench --site test_site run-parallel-tests --app your_app_name --total-builds 4 --build-number 1
+
 # With specific test pattern
 bench --site test_site run-parallel-tests --app your_app_name --pattern "test_*.py"
 
@@ -38,9 +72,25 @@ bench --site test_site run-parallel-tests --app your_app_name --with-coverage
 bench --site test_site run-parallel-tests --app your_app_name --failfast
 ```
 
+### Alternative: run-tests (Non-Parallel)
+
+Some apps use `run-tests` instead of `run-parallel-tests`:
+
+```bash
+# Standard test execution
+bench --site test_site run-tests --app your_app_name
+
+# With coverage
+bench --site test_site run-tests --app your_app_name --coverage
+```
+
 ### In Workflow
 
 ```yaml
+- name: Set Config
+  run: bench --site test_site set-config allow_tests true
+  working-directory: /home/runner/frappe-bench
+
 - name: Run Tests
   run: bench --site test_site run-parallel-tests --app your_app_name
   working-directory: /home/runner/frappe-bench
@@ -172,16 +222,69 @@ Then run UI tests normally. Backend coverage is collected automatically.
 
 ### Uploading Coverage
 
+#### Simple Upload
+
 Upload to Codecov or similar services:
 
 ```yaml
 - name: Upload Coverage
-  uses: codecov/codecov-action@v3
+  uses: codecov/codecov-action@v4
   with:
     file: ~/frappe-bench/apps/your_app_name/coverage.xml
     flags: server
     name: Server Tests
 ```
+
+#### Multi-Job Coverage Pattern (Recommended)
+
+Official apps like Helpdesk use a multi-job pattern for coverage:
+
+```yaml
+jobs:
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      # ... setup and test steps ...
+      
+      - name: Run Tests
+        run: bench --site test_site run-tests --app your_app_name --coverage
+      
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.container }}
+          path: /home/runner/frappe-bench/sites/coverage.xml
+
+  coverage:
+    name: Coverage Wrap Up
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone
+        uses: actions/checkout@v6
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Upload coverage data
+        uses: codecov/codecov-action@v4
+        with:
+          name: MariaDB
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          verbose: true
+```
+
+This pattern:
+1. Runs tests and saves coverage as artifacts
+2. Separate job downloads all coverage artifacts
+3. Uploads combined coverage to Codecov
+
+Benefits:
+- Works with matrix strategies
+- Combines coverage from multiple test runs
+- Cleaner separation of concerns
 
 ## Test Output and Logging
 
