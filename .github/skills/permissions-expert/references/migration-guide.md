@@ -56,6 +56,8 @@ Based on your requirements, select the right hooks:
 | Validate writes before commit | `write_permission_query_conditions` |
 | Portal/website access | `has_website_permission` |
 | Quick prototyping | Server Script (Permission Query) |
+| Filter workflow transitions | `filter_workflow_transitions` |
+| Control workflow action permissions | `has_workflow_action_permission` |
 
 ### Decision Tree
 
@@ -70,7 +72,12 @@ Need to filter list views?
       │
       Need to validate writes?
       ├─ Yes → Use write_permission_query_conditions
-      └─ No → Use role permissions only
+      └─ No
+         │
+         Need workflow-specific logic?
+         ├─ Yes (transition filtering) → Use filter_workflow_transitions
+         ├─ Yes (action permissions) → Use has_workflow_action_permission
+         └─ No → Use role permissions only
 ```
 
 ## Step 3: Implement Permission Hooks
