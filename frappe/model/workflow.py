@@ -71,7 +71,9 @@ def get_transitions(
 
 	# Allow custom filtering of transitions
 	for method in frappe.get_hooks("filter_workflow_transitions", []):
-		transitions = frappe.call(method, doc=doc, transitions=transitions, workflow=workflow) or transitions
+		result = frappe.call(method, doc=doc, transitions=transitions, workflow=workflow)
+		if result is not None:
+			transitions = result
 
 	return transitions
 
