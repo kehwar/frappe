@@ -4,25 +4,6 @@ This directory contains reusable skills that extend capabilities for specific do
 
 ## Available Skills
 
-### report-expert
-
-Expert guidance on Frappe reports including report types, structure, creation workflow, and best practices. Use this when you need help with:
-- Understanding different report types (Script Report, Query Report, Report Builder, Custom Report)
-- Creating standard script reports with proper structure
-- Working with report columns, filters, and data formatting
-- Implementing advanced features like charts, summaries, and custom actions
-- Understanding boilerplate code generation for reports
-- Troubleshooting report-related issues
-
-**Location:** `.github/skills/report-expert/`
-
-**Key files:**
-- `SKILL.md` - Main skill documentation covering all report types and workflows
-- `references/script-report-examples.md` - Complete working examples of various report patterns
-- `references/column-fieldtypes.md` - Comprehensive guide to all column fieldtypes
-- `references/filter-types.md` - Complete reference for filter configurations
-- `references/advanced-features.md` - Charts, summaries, custom buttons, and optimization
-
 ### frappe-ci-expert
 
 Expert guidance for setting up CI/CD tests for Frappe apps using GitHub Actions. Use this when you need help with:
@@ -42,42 +23,6 @@ Expert guidance for setting up CI/CD tests for Frappe apps using GitHub Actions.
 - `references/helper-scripts.md` - Script templates and explanations
 - `references/test-execution.md` - Test running strategies
 - `references/ci-patterns.md` - Best practices and patterns
-
-### doctype-schema-expert
-
-Expert guidance on Frappe DocType schemas including JSON structure, field types, properties, naming conventions, and best practices. Use this when you need help with:
-- Creating or modifying DocType JSON files
-- Understanding DocType structure and properties
-- Working with field definitions and field types
-- Configuring DocType properties and permissions
-- Troubleshooting schema-related issues
-
-**Location:** `.github/skills/doctype-schema-expert/`
-
-**Key files:**
-- `SKILL.md` - Main skill documentation
-- `references/field-types.md` - Complete field type reference
-- `references/field-properties.md` - Field property configurations
-- `references/doctype-structure.md` - DocType JSON structure guide
-- `references/naming-conventions.md` - Naming best practices
-- `references/common-patterns.md` - Common DocType patterns
-- `references/best-practices.md` - DocType development best practices
-
-### bench-commands
-
-Comprehensive reference for Frappe bench CLI commands. Use this when you need help with:
-- Site management and operations
-- App installation and updates
-- Database operations and migrations
-- Backup and restore procedures
-- Development workflows and debugging
-- Common bench utilities
-
-**Location:** `.github/skills/bench-commands/`
-
-**Key files:**
-- `SKILL.md` - Main command reference
-- `references/` - Detailed command documentation by category
 
 ### skill-creator
 

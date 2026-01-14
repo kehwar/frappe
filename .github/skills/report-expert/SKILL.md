@@ -43,35 +43,7 @@ Every Script Report consists of three files:
 
 ## Core Concepts
 
-### The Report Metadata (.json file)
-
-Required fields in the JSON file:
-
-```json
-{
-  "report_name": "My Report",
-  "ref_doctype": "DocType Name",
-  "report_type": "Script Report",
-  "is_standard": "Yes",
-  "module": "Module Name",
-  "disabled": 0,
-  "add_total_row": 0,
-  "roles": [
-    {"role": "System Manager"}
-  ]
-}
-```
-
-**Key properties:**
-- `report_name`: Display name of the report
-- `ref_doctype`: The primary DocType this report relates to (required)
-- `report_type`: One of "Report Builder", "Query Report", "Script Report", "Custom Report"
-- `is_standard`: "Yes" for app-bundled reports, "No" for custom reports
-- `module`: The module this report belongs to
-- `add_total_row`: Set to 1 to automatically add a total row at the bottom
-- `roles`: Array of roles that can access this report
-
-### The Execute Function (.py file)
+### The Execute Function
 
 The Python file must contain an `execute(filters=None)` function:
 
@@ -86,51 +58,41 @@ def execute(filters=None):
 - Returns a tuple: `(columns, data)` or extended `(columns, data, message, chart, report_summary, skip_total_row)`
 - `columns`: List of column definitions
 - `data`: List of rows (each row is a list or dict)
-- `message` (optional): String message to display
-- `chart` (optional): Chart configuration dict
-- `report_summary` (optional): Summary statistics list
-- `skip_total_row` (optional): Boolean to skip total row
 
 ### Column Format
 
 Columns can be defined as strings or dictionaries:
 
-**String format (concise):**
+**String format:**
 ```python
 columns = [
-    "ID:Link/DocType:100",           # Label:Fieldtype/Options:Width
-    "Name:Data:150",                  # Label:Fieldtype:Width
-    "Amount:Currency:120",            # Label:Fieldtype:Width
-    "Date:Date",                      # Label:Fieldtype (default width)
+    "Name:Data:150",
+    "Amount:Currency:120",
+    "Customer:Link/Customer:200"
 ]
 ```
 
-**Dictionary format (detailed):**
+**Dictionary format:**
 ```python
 columns = [
     {
-        "label": "ID",
-        "fieldname": "id",
-        "fieldtype": "Link",
-        "options": "DocType",
-        "width": 100
-    },
-    {
-        "label": "Amount",
-        "fieldname": "amount",
-        "fieldtype": "Currency",
-        "width": 120
+        "label": "Name",
+        "fieldname": "name",
+        "fieldtype": "Data",
+        "width": 150
     }
 ]
 ```
 
-**Common fieldtypes for columns:**
+**Common fieldtypes:**
 - **Text**: Data, Small Text, Text, Long Text, Text Editor, HTML Editor, Markdown Editor, Code
 - **Numeric**: Int, Long Int, Float, Currency, Percent
 - **Date/Time**: Date, Datetime, Time, Duration
 - **Relationships**: Link (requires `options`), Dynamic Link
 - **Boolean**: Check
 - **Special**: Attach, Attach Image, Signature, Color, Barcode, Rating, Icon, Geolocation, Phone, Autocomplete, JSON, Password, Read Only
+
+See [references/column-fieldtypes.md](references/column-fieldtypes.md) for complete field type reference.
 
 ### Data Format
 
@@ -139,22 +101,22 @@ Data rows can be lists or dictionaries:
 **List format (matches column order):**
 ```python
 data = [
-    ["ID-001", "John Doe", 1000, "2024-01-01"],
-    ["ID-002", "Jane Smith", 2000, "2024-01-02"],
+    ["ID-001", 1000, "Customer A"],
+    ["ID-002", 2000, "Customer B"],
 ]
 ```
 
 **Dictionary format (uses fieldnames):**
 ```python
 data = [
-    {"id": "ID-001", "name": "John Doe", "amount": 1000, "date": "2024-01-01"},
-    {"id": "ID-002", "name": "Jane Smith", "amount": 2000, "date": "2024-01-02"},
+    {"name": "ID-001", "amount": 1000, "customer": "Customer A"},
+    {"name": "ID-002", "amount": 2000, "customer": "Customer B"},
 ]
 ```
 
-### Filters (.js file)
+### Filters
 
-The JavaScript file defines filters shown to users:
+Filters are defined in the JavaScript file:
 
 ```javascript
 frappe.query_reports["Report Name"] = {
@@ -164,304 +126,42 @@ frappe.query_reports["Report Name"] = {
             label: __("Company"),
             fieldtype: "Link",
             options: "Company",
-            reqd: 1,
-            default: frappe.defaults.get_user_default("Company")
+            reqd: 1
         },
         {
             fieldname: "from_date",
             label: __("From Date"),
             fieldtype: "Date",
             default: frappe.datetime.add_months(frappe.datetime.get_today(), -1)
-        },
-        {
-            fieldname: "to_date",
-            label: __("To Date"),
-            fieldtype: "Date",
-            default: frappe.datetime.get_today()
         }
     ]
 };
 ```
 
-**Filter properties:**
-- `fieldname`: Internal name (used in Python `filters` dict)
-- `label`: Display label
-- `fieldtype`: Field type (Link, Date, Select, Check, etc.)
-- `options`: For Link/Select fields
-- `reqd`: Set to 1 for required filters
-- `default`: Default value
-- `get_query`: Function to filter Link field options
+See [references/filter-fieldtypes.md](references/filter-fieldtypes.md) for complete filter reference.
 
-## Creating a New Script Report
+## Creating a Script Report
 
-### Step 1: Create Report via Desk (Standard Reports)
+### Quick Start
 
-For standard reports (shipped with apps):
+1. **Create Report via Desk**: Navigate to Report DocType, create new with type "Script Report"
+2. **Implement Execute Function**: Edit the generated `.py` file with your logic
+3. **Define Filters**: Edit the generated `.js` file with filter definitions
+4. **Test**: Run `bench migrate` and navigate to `/app/query-report/Your Report`
 
-1. Navigate to Report DocType list
-2. Create new Report document
-3. Set:
-   - Report Name: "My Report"
-   - Report Type: "Script Report"
-   - Ref DocType: Select primary DocType
-   - Module: Select module
-   - Is Standard: "Yes"
-4. Save
+See [references/report-creation-workflow.md](references/report-creation-workflow.md) for detailed step-by-step guide.
 
-The framework automatically creates boilerplate files at:
-```
-{app}/{module}/report/{report_name}/
-├── __init__.py
-├── {report_name}.json
-├── {report_name}.py
-└── {report_name}.js
-```
+## Common Use Cases
 
-### Step 2: Implement the Execute Function
-
-Edit `{report_name}.py`:
-
-```python
-# Copyright (c) 2024, Your Company and contributors
-# For license information, please see license.txt
-
-import frappe
-from frappe import _
-
-def execute(filters=None):
-    columns = get_columns()
-    data = get_data(filters)
-    return columns, data
-
-def get_columns():
-    return [
-        _("ID") + ":Link/DocType:120",
-        _("Name") + ":Data:150",
-        _("Amount") + ":Currency:120",
-        _("Date") + ":Date:100",
-    ]
-
-def get_data(filters):
-    # Your data fetching logic
-    conditions = get_conditions(filters)
-    
-    data = frappe.db.sql("""
-        SELECT 
-            name,
-            title,
-            total_amount,
-            posting_date
-        FROM `tabDocType`
-        WHERE docstatus = 1 {conditions}
-        ORDER BY posting_date DESC
-    """.format(conditions=conditions), filters, as_list=1)
-    
-    return data
-
-def get_conditions(filters):
-    conditions = ""
-    
-    if filters.get("company"):
-        conditions += " AND company = %(company)s"
-    
-    if filters.get("from_date"):
-        conditions += " AND posting_date >= %(from_date)s"
-    
-    if filters.get("to_date"):
-        conditions += " AND posting_date <= %(to_date)s"
-    
-    return conditions
-```
-
-### Step 3: Define Filters
-
-Edit `{report_name}.js`:
-
-```javascript
-// Copyright (c) 2024, Your Company and contributors
-// For license information, please see license.txt
-
-frappe.query_reports["My Report"] = {
-    filters: [
-        {
-            fieldname: "company",
-            label: __("Company"),
-            fieldtype: "Link",
-            options: "Company",
-            default: frappe.defaults.get_user_default("Company")
-        },
-        {
-            fieldname: "from_date",
-            label: __("From Date"),
-            fieldtype: "Date",
-            default: frappe.datetime.add_months(frappe.datetime.get_today(), -1),
-            reqd: 1
-        },
-        {
-            fieldname: "to_date",
-            label: __("To Date"),
-            fieldtype: "Date",
-            default: frappe.datetime.get_today(),
-            reqd: 1
-        }
-    ]
-};
-```
-
-### Step 4: Test the Report
-
-1. Run `bench migrate` to sync changes
-2. Navigate to the report: `/app/query-report/My Report`
-3. Apply filters and verify data
-
-## Advanced Features
-
-### Adding Charts
-
-Return a chart configuration as the 4th element:
+### Simple List Report
 
 ```python
 def execute(filters=None):
-    columns = get_columns()
-    data = get_data(filters)
-    chart = get_chart_data(data)
-    
-    return columns, data, None, chart
-
-def get_chart_data(data):
-    return {
-        "data": {
-            "labels": ["Jan", "Feb", "Mar"],
-            "datasets": [
-                {
-                    "name": "Revenue",
-                    "values": [100, 200, 300]
-                }
-            ]
-        },
-        "type": "line",  # line, bar, pie, percentage
-        "height": 300
-    }
-```
-
-### Adding Report Summary
-
-Show key metrics at the top:
-
-```python
-def execute(filters=None):
-    columns = get_columns()
-    data = get_data(filters)
-    
-    # Calculate summary
-    total_amount = sum(row[2] for row in data)
-    count = len(data)
-    
-    report_summary = [
-        {
-            "value": count,
-            "label": "Total Records",
-            "datatype": "Int"
-        },
-        {
-            "value": total_amount,
-            "label": "Total Amount",
-            "datatype": "Currency"
-        }
-    ]
-    
-    return columns, data, None, None, report_summary
-```
-
-### Custom Buttons and Actions
-
-Add custom buttons in the JS file:
-
-```javascript
-frappe.query_reports["My Report"] = {
-    filters: [...],
-    
-    onload: function(report) {
-        report.page.add_inner_button(__("Export"), function() {
-            // Custom export logic
-            frappe.call({
-                method: "your_app.reports.my_report.export_data",
-                args: {
-                    filters: report.get_filter_values()
-                },
-                callback: function(r) {
-                    // Handle response
-                }
-            });
-        });
-    }
-};
-```
-
-### Tree Reports
-
-For hierarchical data:
-
-```python
-def execute(filters=None):
-    columns = get_columns()
-    data = get_data(filters)
-    
-    return columns, data, None, None, None, None, True  # Last param enables tree view
-```
-
-Data should include `indent` and `parent_account` fields for tree structure.
-
-### Permissions
-
-**Access control:**
-```python
-def execute(filters=None):
-    # Restrict to specific role
-    frappe.only_for("System Manager")
-    
-    # Or check permission
-    if not frappe.has_permission("DocType", "read"):
-        frappe.throw("Insufficient permissions")
-    
-    columns, data = get_columns(), get_data(filters)
-    return columns, data
-```
-
-### Query Optimization
-
-**Best practices:**
-
-1. **Use proper indexing**: Filter on indexed fields
-2. **Limit data**: Add LIMIT clause for large datasets
-3. **Avoid SELECT ***: Select only needed columns
-4. **Use `frappe.get_list()`** for simple queries:
-   ```python
-   data = frappe.get_list(
-       "DocType",
-       fields=["name", "title", "amount"],
-       filters={"status": "Active"},
-       order_by="creation desc"
-   )
-   ```
-
-5. **Cache expensive operations**:
-   ```python
-   @frappe.whitelist()
-   def get_cached_data():
-       return frappe.cache().get_value(
-           "my_report_data",
-           generator=lambda: fetch_data()
-       )
-   ```
-
-## Common Patterns
-
-### Pattern 1: Simple List Report
-
-```python
-def execute(filters=None):
-    return get_columns(), get_data(filters)
+    return get_columns(), frappe.get_list(
+        "DocType",
+        fields=["name", "status", "amount"],
+        filters=filters
+    )
 
 def get_columns():
     return [
@@ -469,203 +169,77 @@ def get_columns():
         "Status:Data:100",
         "Amount:Currency:120"
     ]
-
-def get_data(filters):
-    return frappe.get_list(
-        "DocType",
-        fields=["name", "status", "amount"],
-        filters=filters
-    )
 ```
 
-### Pattern 2: Report with Calculations
+### Report with Calculations
 
-```python
-def execute(filters=None):
-    columns = get_columns()
-    raw_data = fetch_raw_data(filters)
-    data = process_data(raw_data)
-    
-    return columns, data
+Add calculated fields in Python before returning data.
 
-def process_data(raw_data):
-    processed = []
-    for row in raw_data:
-        # Calculate additional fields
-        total = row.qty * row.rate
-        tax = total * 0.18
-        grand_total = total + tax
-        
-        processed.append([
-            row.name,
-            row.qty,
-            row.rate,
-            total,
-            tax,
-            grand_total
-        ])
-    return processed
-```
+### Grouped/Hierarchical Reports
 
-### Pattern 3: Multi-Level Grouping
+Use `indent` field and return tree structure flag.
 
-```python
-def execute(filters=None):
-    columns = get_columns()
-    data = get_grouped_data(filters)
-    
-    return columns, data
+See [references/script-report-examples.md](references/script-report-examples.md) for complete working examples.
 
-def get_grouped_data(filters):
-    from itertools import groupby
-    
-    raw_data = fetch_data(filters)
-    data = []
-    
-    for company, company_rows in groupby(raw_data, key=lambda x: x.company):
-        # Add company header
-        data.append({
-            "company": company,
-            "indent": 0,
-            "is_group": 1
-        })
-        
-        # Add detail rows
-        for row in company_rows:
-            data.append({
-                "item": row.item_name,
-                "qty": row.qty,
-                "amount": row.amount,
-                "indent": 1
-            })
-    
-    return data
-```
+## Advanced Features
 
-### Pattern 4: Dynamic Columns
+- **Charts**: Return chart configuration as 4th element
+- **Report Summary**: Return summary metrics as 5th element
+- **Custom Buttons**: Add buttons in JavaScript `onload` function
+- **Tree View**: Enable hierarchical display with indent levels
+- **Permissions**: Use `frappe.only_for()` or `frappe.has_permission()`
+- **Performance**: Cache results, use proper indexing, limit data
 
-```python
-def execute(filters=None):
-    columns = get_dynamic_columns(filters)
-    data = get_data(filters)
-    
-    return columns, data
-
-def get_dynamic_columns(filters):
-    columns = ["Item:Link/Item:150"]
-    
-    # Add date columns dynamically
-    date_list = get_date_range(filters.from_date, filters.to_date)
-    for date in date_list:
-        columns.append(f"{date}:Float:100")
-    
-    return columns
-```
-
-## Best Practices
-
-### Code Organization
-
-1. **Separate concerns**: Use helper functions for columns, data, conditions
-2. **Use meaningful names**: `get_columns()`, `get_data()`, `get_conditions()`
-3. **Add docstrings**: Document complex logic
-4. **Handle None filters**: Always check `filters.get(key)` not `filters[key]`
-
-### Performance
-
-1. **Filter early**: Apply filters in SQL WHERE clause, not in Python
-2. **Paginate large datasets**: Use LIMIT and OFFSET
-3. **Use database efficiently**: Minimize queries, use JOINs appropriately
-4. **Cache when possible**: Cache expensive calculations
-
-### User Experience
-
-1. **Provide sensible defaults**: Set default filter values
-2. **Add helpful messages**: Use the `message` return value for guidance
-3. **Use appropriate column widths**: Make reports readable
-4. **Add translations**: Wrap labels in `_()` or `__()`
-5. **Sort logically**: Order data in a meaningful way
-
-### Security
-
-1. **Validate permissions**: Check user access with `frappe.only_for()` or `frappe.has_permission()`
-2. **Sanitize inputs**: Validate filter values
-3. **Use parameterized queries**: Never concatenate user input into SQL
-4. **Respect row-level permissions**: Use `frappe.get_list()` which respects permissions
-
-## Troubleshooting
-
-### Report not showing up
-- Check if report is disabled
-- Verify user has required role
-- Check ref_doctype permissions
-- Run `bench migrate` to sync
-
-### Data not displaying correctly
-- Verify column count matches data row length
-- Check fieldtype matches data type
-- Ensure fieldnames are correct (for dict format)
-
-### Filter not working
-- Check fieldname matches in JS and Python
-- Verify filter value is being passed correctly
-- Add debug prints: `frappe.log_error(str(filters))`
-
-### Performance issues
-- Add LIMIT clause
-- Create database indexes
-- Use `frappe.db.sql()` with proper WHERE clause
-- Profile slow queries
+See [references/advanced-features.md](references/advanced-features.md) for detailed documentation.
 
 ## Reference Files
 
-For more detailed information:
+For detailed information on specific topics:
 
-- **[script-report-examples.md](references/script-report-examples.md)** - Complete working examples of script reports
-- **[column-fieldtypes.md](references/column-fieldtypes.md)** - All available column fieldtypes and their usage
-- **[filter-types.md](references/filter-types.md)** - Complete filter field types and configurations
-- **[advanced-features.md](references/advanced-features.md)** - Charts, summaries, custom buttons, and more
+- **[report-creation-workflow.md](references/report-creation-workflow.md)** - Step-by-step guide to creating Script Reports
+- **[script-report-examples.md](references/script-report-examples.md)** - Complete working examples of various report patterns
+- **[column-fieldtypes.md](references/column-fieldtypes.md)** - All available column fieldtypes
+- **[column-fieldproperties.md](references/column-fieldproperties.md)** - Column properties and formatting options
+- **[filter-fieldtypes.md](references/filter-fieldtypes.md)** - All available filter types
+- **[filter-fieldproperties.md](references/filter-fieldproperties.md)** - Filter properties and configuration options
+- **[advanced-features.md](references/advanced-features.md)** - Charts, summaries, custom buttons, tree reports, and optimization
 
-## Boilerplate Generation
+## Best Practices
 
-When you create a standard Script Report via the desk:
+**Code Organization:**
+- Use helper functions: `get_columns()`, `get_data()`, `get_conditions()`
+- Handle None filters: Check `filters.get(key)` not `filters[key]`
 
-1. Report document is saved to database
-2. On save, if `is_standard == "Yes"`:
-   - Report JSON is exported to: `{app}/{module}/report/{report_name}/{report_name}.json`
-   - Boilerplate files are created via `make_boilerplate()`:
-     - `{report_name}.py` - From `frappe/core/doctype/report/boilerplate/controller.py`
-     - `{report_name}.js` - From `frappe/core/doctype/report/boilerplate/controller.js`
+**Performance:**
+- Filter early in SQL WHERE clause
+- Use proper database indexes
+- Add LIMIT for large datasets
+- Cache expensive operations
 
-**Boilerplate templates:**
+**Security:**
+- Validate permissions with `frappe.only_for()` or `frappe.has_permission()`
+- Sanitize inputs in SQL queries
+- Use parameterized queries
 
-Python template (`controller.py`):
-```python
-# Copyright (c) {year}, {app_publisher} and contributors
-# For license information, please see license.txt
+**User Experience:**
+- Provide sensible default filter values
+- Use appropriate column widths
+- Add translations with `_()` or `__()`
+- Sort data logically
 
-# import frappe
+## Troubleshooting
 
-def execute(filters=None):
-    columns, data = [], []
-    return columns, data
-```
+**Report not showing up:**
+- Check if report is disabled
+- Verify user has required role
+- Run `bench migrate` to sync
 
-JavaScript template (`controller.js`):
-```javascript
-// Copyright (c) {year}, {app_publisher} and contributors
-// For license information, please see license.txt
+**Data not displaying correctly:**
+- Verify column count matches data row length
+- Check fieldtype matches data type
 
-frappe.query_reports["{name}"] = {
-    "filters": []
-};
-```
+**Filter not working:**
+- Check fieldname matches in JS and Python
+- Verify filter value is passed correctly
 
-The placeholders `{year}`, `{app_publisher}`, and `{name}` are replaced automatically.
-
-## Related Documentation
-
-- Frappe Framework documentation on reports
-- Report Builder documentation
-- Query Report SQL guidelines
-- DocType permissions for report access control
+See documentation for common issues and solutions.
