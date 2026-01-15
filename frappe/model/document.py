@@ -258,15 +258,18 @@ class Document(BaseDocument):
 		)
 		raise frappe.PermissionError
 
-	def check_write_permission_query_conditions(self, permtype="write"):
+	def check_write_permission_query_conditions(self, permtype="write", rollback_on_failure=False):
 		"""Check if document passes write permission query conditions.
 		
-		This is called after DB write but before commit to validate the record
-		against custom permission conditions defined via hooks.
-		For delete operations, this is called before the record is deleted.
-		Raises PermissionError if check fails.
+		Permission query conditions check against the database record, so timing varies:
+		- Insert: Check AFTER DB write (record must exist to query)
+		- Update: Check BEFORE and AFTER DB write
+		- Delete: Check BEFORE DB delete (record won't exist after)
+		
+		If check fails after a DB write, the transaction is rolled back.
 		
 		:param permtype: Permission type being checked (e.g., "create", "write", "submit", "cancel", "delete")
+		:param rollback_on_failure: If True, rollback the transaction if check fails
 		"""
 		if self.flags.ignore_permissions:
 			return
@@ -274,11 +277,8 @@ class Document(BaseDocument):
 		from frappe.permissions import check_write_permission_query_conditions
 		
 		if not check_write_permission_query_conditions(self, permtype=permtype):
-			# Rollback the transaction for write operations (not delete)
-			# Delete operations don't need rollback as nothing was written yet
-			if permtype != "delete":
+			if rollback_on_failure:
 				frappe.db.rollback()
-			
 			# Use existing error handling
 			self._handle_permission_failure(permtype)
 
@@ -347,8 +347,8 @@ class Document(BaseDocument):
 		for d in self.get_all_children():
 			d.db_insert()
 
-		# Check write permission query conditions after DB write
-		self.check_write_permission_query_conditions(permtype="create")
+		# Check write permission query conditions after DB insert (record must exist in DB for query conditions to work)
+		self.check_write_permission_query_conditions(permtype="create", rollback_on_failure=True)
 
 		self.run_method("after_insert")
 		self.flags.in_insert = True
@@ -448,15 +448,6 @@ class Document(BaseDocument):
 
 		self.set_docstatus()
 
-		# parent
-		if self.meta.issingle:
-			self.update_single(self.get_valid_dict())
-		else:
-			self.db_update()
-
-		self.update_children()
-		
-		# Check write permission query conditions after DB write
 		# Determine permtype based on action
 		if self._action == "submit":
 			permtype = "submit"
@@ -466,7 +457,20 @@ class Document(BaseDocument):
 			permtype = "submit"
 		else:
 			permtype = "write"
-		self.check_write_permission_query_conditions(permtype=permtype)
+
+		# Check write permission query conditions before DB write
+		self.check_write_permission_query_conditions(permtype=permtype, rollback_on_failure=False)
+
+		# parent
+		if self.meta.issingle:
+			self.update_single(self.get_valid_dict())
+		else:
+			self.db_update()
+
+		self.update_children()
+
+		# Check write permission query conditions after DB write
+		self.check_write_permission_query_conditions(permtype=permtype, rollback_on_failure=True)
 		
 		self.run_post_save_methods()
 
@@ -1336,7 +1340,10 @@ class Document(BaseDocument):
 
 	def check_no_back_links_exist(self):
 		"""Check if document links to any active document before Cancel."""
-		from frappe.model.delete_doc import check_if_doc_is_dynamically_linked, check_if_doc_is_linked
+		from frappe.model.delete_doc import (
+		    check_if_doc_is_dynamically_linked,
+		    check_if_doc_is_linked,
+		)
 
 		if not self.flags.ignore_links:
 			check_if_doc_is_linked(self, method="Cancel")
