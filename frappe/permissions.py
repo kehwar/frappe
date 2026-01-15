@@ -281,6 +281,8 @@ def has_permission(
 	if not perm and not ignore_share_permissions:
 		debug and _debug_log("Checking if document/doctype is explicitly shared with user")
 		perm = false_if_not_shared()
+		if perm and doc and ptype in ("read", "select"):
+			return True
 
 	# For read and select actions with a document, also check permission query conditions
 	if perm and doc and ptype in ("read", "select"):
