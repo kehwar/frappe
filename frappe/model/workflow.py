@@ -160,7 +160,7 @@ def apply_workflow(doc, action):
 	doc.add_comment("Workflow", _(next_state.state))
 
 	# Call after_transition hook if defined
-	doc.run_method("after_transition", transition)
+	doc.run_method("after_transition", transition=transition)
 
 	return doc
 
