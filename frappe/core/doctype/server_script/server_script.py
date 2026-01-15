@@ -174,15 +174,16 @@ class ServerScript(Document):
 		else:
 			return execute_api_server_script(self)
 
-	def execute_doc(self, doc: Document):
+	def execute_doc(self, doc: Document, local_vars: dict | None = None):
 		"""Specific to Document Event triggered Server Scripts
 
 		Args:
 		        doc (Document): Executes script with for a certain document's events
 		"""
+
 		safe_exec(
 			self.script,
-			_locals={"doc": doc},
+			_locals={"doc": doc, **(local_vars or {})},
 			restrict_commit_rollback=True,
 			script_filename=self.name,
 		)

@@ -1052,7 +1052,7 @@ class Document(BaseDocument):
 
 		self.run_notifications(method)
 		run_webhooks(self, method)
-		run_server_script_for_doc_event(self, method)
+		run_server_script_for_doc_event(self, method, local_vars=kwargs)
 
 		return out
 

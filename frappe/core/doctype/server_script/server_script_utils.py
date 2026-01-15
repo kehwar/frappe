@@ -32,7 +32,7 @@ EVENT_MAP = {
 }
 
 
-def run_server_script_for_doc_event(doc, event):
+def run_server_script_for_doc_event(doc, event, local_vars=None):
 	# run document event method
 	if event not in EVENT_MAP:
 		return
@@ -47,7 +47,7 @@ def run_server_script_for_doc_event(doc, event):
 	if scripts:
 		# run all scripts for this doctype + event
 		for script_name in scripts:
-			frappe.get_doc("Server Script", script_name).execute_doc(doc)
+			frappe.get_doc("Server Script", script_name).execute_doc(doc, local_vars=local_vars)
 
 
 def get_server_script_map():
