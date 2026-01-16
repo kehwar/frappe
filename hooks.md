@@ -34,3 +34,14 @@
 
 1. `permission_query_conditions:[doctype]` - method to return additional query conditions at time of report / list etc.
 1. `has_permission:[doctype]` - method to call permissions to check at individual level
+
+#### Safe Execution
+
+1. `safe_exec_globals` - method that returns a dict of additional globals to be made available in `frappe.safe_exec()`. The method receives the current globals dict as an argument and should return a dict of additional globals to add.
+1. `safe_eval_globals` - method that returns a dict of additional globals to be made available in `frappe.safe_eval()`. The method receives the current globals dict as an argument and should return a dict of additional globals to add.
+
+#### Workflows
+
+1. `workflow_safe_eval_globals` - method that returns a dict of additional globals to be made available in workflow transition conditions. The method receives the current globals dict as an argument and should return a dict of additional globals to add.
+1. `filter_workflow_transitions` - method to filter workflow transitions. The method receives `doc`, `transitions`, and `workflow` as arguments and should return the filtered list of transitions.
+1. `has_workflow_action_permission` - method to check if a user has permission to perform a workflow action. The method receives `user`, `transition`, and `doc` as arguments and should return a boolean.
