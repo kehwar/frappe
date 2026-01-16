@@ -137,6 +137,11 @@ has_permission = {
 
 has_website_permission = {"Address": "frappe.contacts.doctype.address.address.has_website_permission"}
 
+# Safe Execution Hooks
+safe_exec_globals = []
+safe_eval_globals = []
+
+# Workflow Hooks
 filter_workflow_transitions = []
 has_workflow_action_permission = []
 workflow_safe_eval_globals = []
