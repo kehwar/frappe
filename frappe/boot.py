@@ -10,8 +10,8 @@ import frappe
 import frappe.defaults
 import frappe.desk.desk_page
 from frappe.core.doctype.installed_applications.installed_applications import (
-	get_setup_wizard_completed_apps,
-	get_setup_wizard_not_required_apps,
+    get_setup_wizard_completed_apps,
+    get_setup_wizard_not_required_apps,
 )
 from frappe.core.doctype.navbar_settings.navbar_settings import get_app_logo, get_navbar_settings
 from frappe.desk.doctype.changelog_feed.changelog_feed import get_changelog_feed_items
@@ -27,7 +27,7 @@ from frappe.query_builder.functions import Count
 from frappe.query_builder.terms import ParameterizedValueWrapper, SubQuery
 from frappe.social.doctype.energy_point_log.energy_point_log import get_energy_points
 from frappe.social.doctype.energy_point_settings.energy_point_settings import (
-	is_energy_point_enabled,
+    is_energy_point_enabled,
 )
 from frappe.utils import add_user_info, cstr, get_system_timezone
 from frappe.utils.change_log import get_versions
@@ -127,6 +127,11 @@ def get_bootinfo():
 	bootinfo.setup_wizard_completed_apps = get_setup_wizard_completed_apps() or []
 	bootinfo.setup_wizard_not_required_apps = get_setup_wizard_not_required_apps() or []
 	remove_apps_with_incomplete_dependencies(bootinfo)
+
+	# Allow apps to add additional bootinfo
+	bootinfo.additional_bootinfo = {}
+	for method in hooks.get_additional_bootinfo or []:
+		frappe.get_attr(method)(bootinfo.additional_bootinfo)
 
 	return bootinfo
 
