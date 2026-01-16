@@ -151,6 +151,13 @@ frappe.ui.form.ScriptManager = class ScriptManager {
 			old_style: [],
 			new_style: [],
 		};
+
+		if (frappe.ui.form.handlers["*"] && frappe.ui.form.handlers["*"][event_name]) {
+			$.each(frappe.ui.form.handlers["*"][event_name], function (i, fn) {
+				handlers.new_style.push(fn);
+			});
+		}
+
 		if (frappe.ui.form.handlers[doctype] && frappe.ui.form.handlers[doctype][event_name]) {
 			$.each(frappe.ui.form.handlers[doctype][event_name], function (i, fn) {
 				handlers.new_style.push(fn);
