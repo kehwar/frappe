@@ -1652,7 +1652,7 @@ def validate_fields(meta: Meta):
 		check_illegal_characters(d.fieldname)
 		check_invalid_fieldnames(meta.get("name"), d.fieldname)
 		check_fieldname_length(d.fieldname)
-		check_hidden_and_mandatory(meta.get("name"), d)
+		# check_hidden_and_mandatory(meta.get("name"), d)
 		check_unique_and_text(meta.get("name"), d)
 		check_table_multiselect_option(d)
 		scrub_options_in_select(d)
