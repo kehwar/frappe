@@ -297,7 +297,7 @@ When `send_email_alert` is enabled:
 3. Custom email templates can be configured per state
 4. Users can approve via email link without logging in
 
-**When to read:** See [references/workflow-actions.md](references/workflow-actions.md) and [references/workflow-email-notifications.md](references/workflow-email-notifications.md) for details.
+**Note**: Workflow action creation and email notification details are covered in [references/workflow-hooks.md](references/workflow-hooks.md) and [references/workflow-structure.md](references/workflow-structure.md).
 
 ## Workflow Permissions
 
@@ -316,7 +316,7 @@ The `allow_edit` field in each state controls:
 - Which role can edit document in that state
 - Used by permission system to grant write access
 
-**When to read:** See [references/workflow-permissions.md](references/workflow-permissions.md) for detailed permission handling.
+**Note**: Workflow permission hooks (`has_workflow_action_permission`) are detailed in [references/workflow-hooks.md](references/workflow-hooks.md).
 
 ## Creating a Workflow
 
@@ -425,14 +425,11 @@ print(actions)
 
 For detailed information on specific topics:
 
-- **[workflow-structure.md](references/workflow-structure.md)** - Workflow DocType structure and all fields
+- **[workflow-structure.md](references/workflow-structure.md)** - Workflow DocType structure, fields, and schema
 - **[workflow-states-transitions.md](references/workflow-states-transitions.md)** - States and transitions configuration
-- **[workflow-actions.md](references/workflow-actions.md)** - Workflow action system and tracking
-- **[workflow-permissions.md](references/workflow-permissions.md)** - Permission handling in workflows
-- **[workflow-hooks.md](references/workflow-hooks.md)** - All workflow extension hooks with examples
-- **[workflow-email-notifications.md](references/workflow-email-notifications.md)** - Email alerts and notifications
+- **[workflow-hooks.md](references/workflow-hooks.md)** - All workflow extension hooks with 30+ examples
 - **[workflow-creation-guide.md](references/workflow-creation-guide.md)** - Step-by-step workflow creation
-- **[workflow-examples.md](references/workflow-examples.md)** - Common workflow patterns and examples
+- **[workflow-examples.md](references/workflow-examples.md)** - 8 complete workflow patterns
 - **[workflow-best-practices.md](references/workflow-best-practices.md)** - Best practices and gotchas
 - **[workflow-troubleshooting.md](references/workflow-troubleshooting.md)** - Common issues and debugging
 
