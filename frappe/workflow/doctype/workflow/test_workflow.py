@@ -152,26 +152,27 @@ class TestWorkflow(FrappeTestCase):
 
 	def test_workflow_safe_eval_globals_hook(self):
 		"""Test that workflow_safe_eval_globals hook can extend globals in workflow conditions"""
-		
+
 		# Create a test hook function
 		def test_hook(globals_dict):
 			return {"custom_value": "test_value", "custom_function": lambda x: x * 2}
-		
+
 		# Register the hook temporarily
 		original_hooks = frappe.get_hooks("workflow_safe_eval_globals")
 		frappe.local.conf.setdefault("workflow_safe_eval_globals", [])
 		frappe.local.conf["workflow_safe_eval_globals"].append(
 			"frappe.workflow.doctype.workflow.test_workflow.test_workflow_safe_eval_globals_hook_fn"
 		)
-		
+
 		# Create workflow with condition using custom global
 		self.workflow.transitions[0].condition = 'custom_value == "test_value"'
 		self.workflow.save()
-		
+
 		# Mock the hook function
 		import frappe.workflow.doctype.workflow.test_workflow as test_module
+
 		test_module.test_workflow_safe_eval_globals_hook_fn = test_hook
-		
+
 		try:
 			# This should work because custom_value is now available
 			todo = create_new_todo()
@@ -188,22 +189,23 @@ class TestWorkflow(FrappeTestCase):
 
 	def test_filter_workflow_transitions_hook(self):
 		"""Test that filter_workflow_transitions hook can filter transitions"""
-		
+
 		def filter_hook(doc, transitions, workflow):
 			# Filter out the "Reject" action
 			return [t for t in transitions if t.get("action") != "Reject"]
-		
+
 		# Register the hook temporarily
 		original_hooks = frappe.get_hooks("filter_workflow_transitions")
 		frappe.local.conf.setdefault("filter_workflow_transitions", [])
 		frappe.local.conf["filter_workflow_transitions"].append(
 			"frappe.workflow.doctype.workflow.test_workflow.test_filter_workflow_transitions_hook_fn"
 		)
-		
+
 		# Mock the hook function
 		import frappe.workflow.doctype.workflow.test_workflow as test_module
+
 		test_module.test_filter_workflow_transitions_hook_fn = filter_hook
-		
+
 		try:
 			todo = create_new_todo()
 			transitions = get_transitions(todo)

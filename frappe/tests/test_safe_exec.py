@@ -125,28 +125,29 @@ class TestSafeExec(FrappeTestCase):
 
 	def test_safe_exec_globals_hook(self):
 		"""Test that safe_exec_globals hook can extend globals in safe_exec"""
-		
+
 		def test_hook(globals_dict):
 			return {"custom_exec_value": "exec_test", "custom_exec_func": lambda x: x + 10}
-		
+
 		# Register the hook temporarily
 		original_hooks = frappe.get_hooks("safe_exec_globals")
 		frappe.local.conf.setdefault("safe_exec_globals", [])
 		frappe.local.conf["safe_exec_globals"].append(
 			"frappe.tests.test_safe_exec.test_safe_exec_globals_hook_fn"
 		)
-		
+
 		# Mock the hook function
 		import frappe.tests.test_safe_exec as test_module
+
 		test_module.test_safe_exec_globals_hook_fn = test_hook
-		
+
 		try:
 			_locals = dict(out=None)
-			safe_exec('out = custom_exec_value', None, _locals)
+			safe_exec("out = custom_exec_value", None, _locals)
 			self.assertEqual(_locals["out"], "exec_test")
-			
+
 			_locals = dict(out=None)
-			safe_exec('out = custom_exec_func(5)', None, _locals)
+			safe_exec("out = custom_exec_func(5)", None, _locals)
 			self.assertEqual(_locals["out"], 15)
 		finally:
 			# Cleanup
@@ -156,25 +157,26 @@ class TestSafeExec(FrappeTestCase):
 
 	def test_safe_eval_globals_hook(self):
 		"""Test that safe_eval_globals hook can extend globals in safe_eval"""
-		
+
 		def test_hook(globals_dict):
 			return {"custom_eval_value": 42, "custom_eval_func": lambda x: x * 3}
-		
+
 		# Register the hook temporarily
 		original_hooks = frappe.get_hooks("safe_eval_globals")
 		frappe.local.conf.setdefault("safe_eval_globals", [])
 		frappe.local.conf["safe_eval_globals"].append(
 			"frappe.tests.test_safe_exec.test_safe_eval_globals_hook_fn"
 		)
-		
+
 		# Mock the hook function
 		import frappe.tests.test_safe_exec as test_module
+
 		test_module.test_safe_eval_globals_hook_fn = test_hook
-		
+
 		try:
 			result = frappe.safe_eval("custom_eval_value")
 			self.assertEqual(result, 42)
-			
+
 			result = frappe.safe_eval("custom_eval_func(7)")
 			self.assertEqual(result, 21)
 		finally:
