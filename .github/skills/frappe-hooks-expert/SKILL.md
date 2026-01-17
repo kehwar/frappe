@@ -107,7 +107,14 @@ Intercept HTTP requests and background jobs:
 
 **When to read:** See [references/request-job-hooks.md](references/request-job-hooks.md) for request and job lifecycle hooks.
 
-### 9. Other Hooks
+### 9. Safe Execution Hooks
+Extend safe code execution environments:
+- `safe_exec_globals` - Add globals for Server Scripts, reports, and custom code execution
+- `safe_eval_globals` - Add globals for formula fields and simple expressions
+
+**When to read:** See [references/other-hooks.md](references/other-hooks.md) for safe execution hooks, differences, and best practices.
+
+### 10. Other Hooks
 Additional extension points:
 - `override_whitelisted_methods` - Override API methods
 - `override_doctype_class` - Replace DocType controllers
