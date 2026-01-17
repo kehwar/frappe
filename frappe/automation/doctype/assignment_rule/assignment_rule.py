@@ -76,7 +76,7 @@ class AssignmentRule(Document):
 			return self.do_assignment(doc)
 
 	def do_assignment(self, doc):
-		# clear existing assignment, to reassign (unless allow_multiple_assignments is enabled)
+		# clear existing assignment, to reassign
 		if not self.allow_multiple_assignments:
 			assign_to.clear(doc.get("doctype"), doc.get("name"), ignore_permissions=True)
 
@@ -286,7 +286,7 @@ def apply(doc=None, method=None, doctype=None, name=None):
 			if clear:
 				break
 
-	# apply rule only if there are no existing assignments or if allow_multiple_assignments is enabled
+	# apply rule only if there are no existing assignments
 	if clear:
 		for assignment_rule in assignment_rule_docs:
 			if assignment_rule.is_rule_not_applicable_today():
