@@ -155,6 +155,292 @@ def validate_auth(user, password):
         frappe.throw("Password format invalid")
 ```
 
+## Safe Execution Hooks
+
+Frappe uses RestrictedPython for safe code execution in Server Scripts, custom reports, and other contexts. These hooks allow apps to extend the available globals in safe execution environments.
+
+### safe_exec_globals
+
+Extend available globals in `frappe.safe_exec()` contexts.
+
+```python
+safe_exec_globals = [
+    "my_app.safe_exec.get_safe_exec_globals"
+]
+```
+
+**Function signature:**
+```python
+def get_safe_exec_globals(current_globals):
+    """
+    Add custom functions or data for safe execution contexts.
+    
+    Args:
+        current_globals: Dict of currently available globals
+    
+    Returns:
+        dict: Additional globals to make available
+    """
+```
+
+**Context:** `frappe.safe_exec()` is used in:
+- Server Scripts (DocType, API, Scheduler, Permission Query)
+- Custom Report scripts
+- Notification conditions
+- Assignment Rule conditions
+- Custom Print Format scripts
+- Webhooks
+
+**Available by default in safe_exec:**
+- `frappe` module with core functions (db, utils, etc.)
+- Common Python builtins (len, range, enumerate, etc.)
+- Safe versions of imports (json, math, etc.)
+
+**Use cases:**
+- Add app-specific helper functions
+- Expose custom APIs for server scripts
+- Provide utility functions for report scripts
+- Add domain-specific calculations
+
+**Example 1: Add utility functions:**
+```python
+def get_safe_exec_globals(current_globals):
+    """Add custom utility functions."""
+    
+    def calculate_tax(amount, rate):
+        """Calculate tax with proper rounding."""
+        return round(amount * rate / 100, 2)
+    
+    def format_currency(amount, currency="USD"):
+        """Format amount as currency."""
+        import frappe.utils
+        return frappe.utils.fmt_money(amount, currency=currency)
+    
+    def get_exchange_rate(from_currency, to_currency):
+        """Get latest exchange rate."""
+        return frappe.db.get_value(
+            "Currency Exchange",
+            {"from_currency": from_currency, "to_currency": to_currency},
+            "exchange_rate"
+        )
+    
+    return {
+        "calculate_tax": calculate_tax,
+        "format_currency": format_currency,
+        "get_exchange_rate": get_exchange_rate,
+    }
+
+# Usage in Server Script:
+# total = calculate_tax(base_amount, tax_rate)
+# display = format_currency(total, "EUR")
+```
+
+**Example 2: Add business logic helpers:**
+```python
+def get_safe_exec_globals(current_globals):
+    """Add business-specific functions."""
+    
+    def get_customer_credit_limit(customer):
+        """Get effective credit limit for customer."""
+        return frappe.db.get_value("Customer", customer, "credit_limit") or 0
+    
+    def is_holiday(date):
+        """Check if date is a holiday."""
+        return frappe.db.exists("Holiday", {"holiday_date": date})
+    
+    def get_working_days(start_date, end_date):
+        """Calculate working days between dates."""
+        from frappe.utils import date_diff, get_datetime
+        days = date_diff(end_date, start_date)
+        # Subtract weekends and holidays
+        # (simplified example)
+        return max(0, days - (days // 7 * 2))
+    
+    return {
+        "get_customer_credit_limit": get_customer_credit_limit,
+        "is_holiday": is_holiday,
+        "get_working_days": get_working_days,
+    }
+
+# Usage in Assignment Rule condition:
+# doc.total_amount <= get_customer_credit_limit(doc.customer)
+```
+
+**Example 3: Add custom API access:**
+```python
+def get_safe_exec_globals(current_globals):
+    """Expose custom app APIs."""
+    
+    class CustomAPI:
+        @staticmethod
+        def get_inventory_status(item_code):
+            """Get real-time inventory status."""
+            # Call custom inventory system
+            return frappe.call("my_app.inventory.get_status", item=item_code)
+        
+        @staticmethod
+        def check_compliance(doc_type, doc_name):
+            """Check document compliance status."""
+            return frappe.call("my_app.compliance.check", 
+                             doctype=doc_type, name=doc_name)
+    
+    return {
+        "CustomAPI": CustomAPI,
+    }
+
+# Usage in Server Script:
+# status = CustomAPI.get_inventory_status("ITEM-001")
+```
+
+**Security considerations:**
+- Functions run in RestrictedPython sandbox
+- Avoid exposing functions that bypass security
+- Validate inputs in your functions
+- Don't provide direct file system or system access
+- Use frappe's permission system within functions
+
+### safe_eval_globals
+
+Extend available globals in `frappe.safe_eval()` contexts.
+
+```python
+safe_eval_globals = [
+    "my_app.safe_eval.get_safe_eval_globals"
+]
+```
+
+**Function signature:**
+```python
+def get_safe_eval_globals(current_globals):
+    """
+    Add custom functions or data for safe evaluation contexts.
+    
+    Args:
+        current_globals: Dict of currently available globals
+    
+    Returns:
+        dict: Additional globals to make available
+    """
+```
+
+**Context:** `frappe.safe_eval()` is used in:
+- Formula fields (e.g., calculated field expressions)
+- Assignment Rule conditions (simple expressions)
+- Notification conditions (simple expressions)
+- Custom validation expressions
+- Dynamic defaults evaluation
+
+**Available by default in safe_eval:**
+- Limited set of safe functions (much more restricted than safe_exec)
+- Basic arithmetic and comparison operators
+- Common Python builtins (max, min, abs, round, etc.)
+
+**Use cases:**
+- Add helper functions for formula fields
+- Provide constants for calculations
+- Add custom comparison functions
+
+**Example 1: Add mathematical functions:**
+```python
+def get_safe_eval_globals(current_globals):
+    """Add math helpers for formula fields."""
+    import math
+    
+    def percentage(value, total):
+        """Calculate percentage."""
+        return (value / total * 100) if total else 0
+    
+    def clamp(value, min_val, max_val):
+        """Clamp value between min and max."""
+        return max(min_val, min(value, max_val))
+    
+    return {
+        "percentage": percentage,
+        "clamp": clamp,
+        "pi": math.pi,
+        "sqrt": math.sqrt,
+    }
+
+# Usage in formula field:
+# percentage(completed_qty, total_qty)
+# clamp(discount, 0, 50)
+```
+
+**Example 2: Add business constants:**
+```python
+def get_safe_eval_globals(current_globals):
+    """Add business configuration as constants."""
+    
+    # Load from configuration
+    config = frappe.get_single("Business Settings")
+    
+    return {
+        "MIN_ORDER_AMOUNT": config.min_order_amount,
+        "MAX_DISCOUNT_PERCENT": config.max_discount_percent,
+        "STANDARD_TAX_RATE": config.standard_tax_rate,
+        "FREE_SHIPPING_THRESHOLD": config.free_shipping_threshold,
+    }
+
+# Usage in formula field:
+# total_amount >= FREE_SHIPPING_THRESHOLD
+# discount_percent <= MAX_DISCOUNT_PERCENT
+```
+
+**Example 3: Add conditional helpers:**
+```python
+def get_safe_eval_globals(current_globals):
+    """Add helper functions for conditions."""
+    
+    def in_range(value, min_val, max_val):
+        """Check if value is in range."""
+        return min_val <= value <= max_val
+    
+    def any_of(value, *options):
+        """Check if value matches any option."""
+        return value in options
+    
+    def all_positive(*values):
+        """Check if all values are positive."""
+        return all(v > 0 for v in values)
+    
+    return {
+        "in_range": in_range,
+        "any_of": any_of,
+        "all_positive": all_positive,
+    }
+
+# Usage in condition:
+# in_range(doc.amount, 100, 1000)
+# any_of(doc.status, "Approved", "Completed")
+```
+
+**Security considerations:**
+- Even more restricted than safe_exec
+- Keep functions pure (no side effects)
+- Avoid database calls in safe_eval contexts (use cached data)
+- Don't expose functions that could be exploited in expressions
+- safe_eval is for simple expressions, not complex logic
+
+### Differences: safe_exec vs safe_eval
+
+| Aspect | safe_exec | safe_eval |
+|--------|-----------|-----------|
+| **Purpose** | Execute multi-line scripts | Evaluate single expressions |
+| **Context** | Server Scripts, Reports | Formula fields, conditions |
+| **Complexity** | Full Python code | Simple expressions only |
+| **Default Globals** | Many (frappe, db, utils) | Very few (basic functions) |
+| **Database Access** | Yes (via frappe.db) | Limited (via frappe.db in globals) |
+| **Performance** | Slower (full execution) | Fast (simple evaluation) |
+| **Use Cases** | Complex logic, workflows | Calculations, validations |
+
+**Best practices:**
+1. **Use safe_eval_globals for:** Simple functions, constants, calculations
+2. **Use safe_exec_globals for:** Complex logic, database operations, integrations
+3. **Cache expensive operations:** Load configuration once, not per evaluation
+4. **Test thoroughly:** Test functions with various inputs
+5. **Document well:** Add clear docstrings for functions
+6. **Keep it simple:** Don't overcomplicate the execution environment
+
 ## Notification Hook
 
 ### notification_config
