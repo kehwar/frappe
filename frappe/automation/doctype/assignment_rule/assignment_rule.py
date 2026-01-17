@@ -287,26 +287,23 @@ def apply(doc=None, method=None, doctype=None, name=None):
 				break
 
 	# apply rule only if there are no existing assignments or if allow_multiple_assignments is enabled
-	assignments_updated = False
-	for assignment_rule in assignment_rule_docs:
-		if assignment_rule.is_rule_not_applicable_today():
-			continue
+	if clear:
+		for assignment_rule in assignment_rule_docs:
+			if assignment_rule.is_rule_not_applicable_today():
+				continue
 
-		# Refetch assignments if they were updated by a previous rule
-		if assignments_updated:
-			assignments = get_assignments(doc)
-			assignments_updated = False
-		
-		# skip if assignments exist and this rule doesn't allow multiple assignments
-		if assignments and not assignment_rule.allow_multiple_assignments:
-			continue
-
-		new_apply = assignment_rule.apply_assign(doc)
-		if new_apply:
-			assignments_updated = True
-			# Only break if multiple assignments are not allowed
-			if not assignment_rule.allow_multiple_assignments:
+			new_apply = assignment_rule.apply_assign(doc)
+			if new_apply:
 				break
+	else:
+		# if assignments exist, check each rule to see if it allows multiple assignments
+		for assignment_rule in assignment_rule_docs:
+			if assignment_rule.is_rule_not_applicable_today():
+				continue
+
+			if assignment_rule.allow_multiple_assignments:
+				new_apply = assignment_rule.apply_assign(doc)
+				# don't break, allow other rules with allow_multiple_assignments to also apply
 
 	# apply close rule only if assignments exists
 	assignments = get_assignments(doc)
