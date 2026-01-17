@@ -297,7 +297,7 @@ def has_permission(
 			perm = False
 
 	# For write, create, submit, cancel, delete actions, also check write permission query conditions
-	if perm and doc and ptype in ("write", "create", "submit", "cancel", "delete"):
+	if perm and doc and ptype in ("write", "create", "submit", "cancel", "delete") and not doc.is_new():
 		if not check_write_permission_query_conditions(doc, ptype=ptype, user=user, debug=debug):
 			debug and _debug_log("Document does not satisfy write permission query conditions")
 			push_perm_check_log(
