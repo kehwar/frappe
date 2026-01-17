@@ -254,6 +254,100 @@ def has_action_permission(user, transition, doc):
     return True
 ```
 
+### workflow_safe_eval_globals
+
+Extend available globals in workflow transition conditions.
+
+```python
+workflow_safe_eval_globals = [
+    "my_app.workflow.get_workflow_globals",
+]
+```
+
+**Function signature:**
+```python
+def get_workflow_globals(current_globals):
+    """
+    Args:
+        current_globals: Dict of currently available globals
+    
+    Returns:
+        dict: Additional globals to make available in workflow conditions
+    """
+```
+
+**Available by default in workflow conditions:**
+- `doc` - Document as dict
+- `frappe.db.get_value` - Get a single value from database
+- `frappe.db.get_list` - Get list of records
+- `frappe.session` - Current session object
+- `frappe.utils.now_datetime` - Current datetime
+- `frappe.utils.add_to_date` - Add/subtract date intervals
+- `frappe.utils.get_datetime` - Parse datetime
+- `frappe.utils.now` - Current timestamp
+
+**Use case:** Add custom functions or data for workflow transition conditions.
+
+**Example 1: Add custom helper function:**
+```python
+def get_workflow_globals(current_globals):
+    def get_approval_limit(user):
+        """Helper to get user's approval limit"""
+        return frappe.db.get_value("User", user, "approval_limit") or 0
+    
+    return {
+        "get_approval_limit": get_approval_limit,
+    }
+
+# In Workflow Transition condition field:
+# doc.grand_total <= get_approval_limit(frappe.session.user)
+```
+
+**Example 2: Add business logic functions:**
+```python
+def get_workflow_globals(current_globals):
+    def is_business_hours():
+        """Check if current time is during business hours"""
+        from datetime import datetime
+        now = datetime.now()
+        return 9 <= now.hour < 17 and now.weekday() < 5
+    
+    def get_regional_manager(region):
+        """Get manager for a region"""
+        return frappe.db.get_value("Region", region, "manager")
+    
+    return {
+        "is_business_hours": is_business_hours,
+        "get_regional_manager": get_regional_manager,
+    }
+
+# In Workflow Transition conditions:
+# is_business_hours() and doc.urgency == "High"
+# doc.assigned_to == get_regional_manager(doc.region)
+```
+
+**Example 3: Add cached configuration data:**
+```python
+def get_workflow_globals(current_globals):
+    # Load configuration once per request
+    config = frappe.cache().get_value("workflow_config")
+    if not config:
+        config = frappe.get_single("Workflow Settings").as_dict()
+        frappe.cache().set_value("workflow_config", config)
+    
+    return {
+        "workflow_config": config,
+    }
+
+# In Workflow Transition condition:
+# doc.total_amount >= workflow_config.min_amount_for_approval
+```
+
+**Security Note:** 
+- Functions added via this hook are available in workflow transition conditions
+- Use safe_eval internally; avoid exposing dangerous operations
+- Validate inputs in your functions to prevent misuse
+
 ## Examples by Use Case
 
 ### 1. Department-Based Access

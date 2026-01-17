@@ -62,6 +62,7 @@ Extend permission logic:
 - `has_website_permission` - Portal/website access control
 - `filter_workflow_transitions` - Customize workflow transitions
 - `has_workflow_action_permission` - Control workflow action visibility
+- `workflow_safe_eval_globals` - Extend available globals in workflow transition conditions
 
 **When to read:** See [references/permission-hooks.md](references/permission-hooks.md) for permission extension hooks.
 
