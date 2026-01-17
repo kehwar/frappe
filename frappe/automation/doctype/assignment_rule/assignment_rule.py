@@ -291,8 +291,11 @@ def apply(doc=None, method=None, doctype=None, name=None):
 		if assignment_rule.is_rule_not_applicable_today():
 			continue
 
+		# Refetch assignments to get current state
+		current_assignments = get_assignments(doc)
+		
 		# skip if assignments exist and this rule doesn't allow multiple assignments
-		if assignments and not clear and not assignment_rule.allow_multiple_assignments:
+		if current_assignments and not assignment_rule.allow_multiple_assignments:
 			continue
 
 		new_apply = assignment_rule.apply_assign(doc)

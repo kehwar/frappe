@@ -343,7 +343,7 @@ class TestAutoAssign(FrappeTestCase):
 		"""Test that allow_multiple_assignments checkbox allows multiple rules to assign to same document"""
 		frappe.db.delete("Assignment Rule")
 		
-		# Create first assignment rule without multiple assignments
+		# Create first assignment rule with multiple assignments enabled
 		rule1 = frappe.get_doc(
 			dict(
 				name=f"For {TEST_DOCTYPE} Rule1",
@@ -352,7 +352,8 @@ class TestAutoAssign(FrappeTestCase):
 				assign_condition="public == 1",
 				rule="Round Robin",
 				assignment_days=self.days,
-				allow_multiple_assignments=0,
+				allow_multiple_assignments=1,  # Enable multiple assignments
+				priority=0,
 				users=[dict(user="test@example.com")],
 			)
 		).insert()
@@ -366,7 +367,7 @@ class TestAutoAssign(FrappeTestCase):
 				assign_condition="public == 1",
 				rule="Round Robin",
 				assignment_days=self.days,
-				allow_multiple_assignments=1,
+				allow_multiple_assignments=1,  # Enable multiple assignments
 				priority=1,  # Higher priority
 				users=[dict(user="test1@example.com")],
 			)
@@ -382,12 +383,71 @@ class TestAutoAssign(FrappeTestCase):
 			fields=["allocated_to", "assignment_rule"],
 		)
 
-		# Should have 2 assignments
+		# Should have 2 assignments (one from each rule)
 		self.assertEqual(len(todos), 2)
 
 		# Check both users are assigned
 		assigned_users = {todo["allocated_to"] for todo in todos}
 		self.assertEqual(assigned_users, {"test@example.com", "test1@example.com"})
+
+		# Verify that each assignment has the correct assignment_rule
+		rule_map = {todo["assignment_rule"]: todo["allocated_to"] for todo in todos}
+		self.assertEqual(rule_map[rule1.name], "test@example.com")
+		self.assertEqual(rule_map[rule2.name], "test1@example.com")
+
+		# Cleanup
+		rule1.delete()
+		rule2.delete()
+		frappe.db.commit()
+
+	def test_single_assignment_blocks_others(self):
+		"""Test that a rule without allow_multiple_assignments blocks subsequent rules"""
+		frappe.db.delete("Assignment Rule")
+		
+		# Create first assignment rule WITHOUT multiple assignments
+		rule1 = frappe.get_doc(
+			dict(
+				name=f"For {TEST_DOCTYPE} Single",
+				doctype="Assignment Rule",
+				document_type=TEST_DOCTYPE,
+				assign_condition="public == 1",
+				rule="Round Robin",
+				assignment_days=self.days,
+				allow_multiple_assignments=0,  # Disable multiple assignments
+				priority=1,  # Higher priority - runs first
+				users=[dict(user="test@example.com")],
+			)
+		).insert()
+
+		# Create second assignment rule with multiple assignments enabled
+		rule2 = frappe.get_doc(
+			dict(
+				name=f"For {TEST_DOCTYPE} Multi",
+				doctype="Assignment Rule",
+				document_type=TEST_DOCTYPE,
+				assign_condition="public == 1",
+				rule="Round Robin",
+				assignment_days=self.days,
+				allow_multiple_assignments=1,  # Enable multiple assignments
+				priority=0,  # Lower priority - runs second
+				users=[dict(user="test1@example.com")],
+			)
+		).insert()
+
+		# Create a test record
+		record = _make_test_record(public=1)
+
+		# Check that only first user is assigned (second rule should be blocked)
+		todos = frappe.get_all(
+			"ToDo",
+			filters={"reference_type": TEST_DOCTYPE, "reference_name": record.name, "status": "Open"},
+			fields=["allocated_to", "assignment_rule"],
+		)
+
+		# Should have only 1 assignment
+		self.assertEqual(len(todos), 1)
+		self.assertEqual(todos[0]["allocated_to"], "test@example.com")
+		self.assertEqual(todos[0]["assignment_rule"], rule1.name)
 
 		# Cleanup
 		rule1.delete()
