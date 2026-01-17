@@ -95,6 +95,9 @@ def clear_user_cache(user=None):
 		clear_defaults_cache()
 		clear_global_cache()
 
+	for fn in frappe.get_hooks("clear_user_cache"):
+		frappe.get_attr(fn)(user)
+
 
 def clear_domain_cache(user=None):
 	domain_cache_keys = ("domain_restricted_doctypes", "domain_restricted_pages")
