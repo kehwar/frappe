@@ -27,6 +27,7 @@ class AssignmentRule(Document):
 
 		assign_condition: DF.Code
 		assignment_days: DF.Table[AssignmentRuleDay]
+		allow_multiple_assignments: DF.Check
 		close_condition: DF.Code | None
 		description: DF.SmallText
 		disabled: DF.Check
@@ -75,8 +76,9 @@ class AssignmentRule(Document):
 			return self.do_assignment(doc)
 
 	def do_assignment(self, doc):
-		# clear existing assignment, to reassign
-		assign_to.clear(doc.get("doctype"), doc.get("name"), ignore_permissions=True)
+		# clear existing assignment, to reassign (unless allow_multiple_assignments is enabled)
+		if not self.allow_multiple_assignments:
+			assign_to.clear(doc.get("doctype"), doc.get("name"), ignore_permissions=True)
 
 		user = self.get_user(doc)
 
@@ -284,14 +286,19 @@ def apply(doc=None, method=None, doctype=None, name=None):
 			if clear:
 				break
 
-	# apply rule only if there are no existing assignments
-	if clear:
-		for assignment_rule in assignment_rule_docs:
-			if assignment_rule.is_rule_not_applicable_today():
-				continue
+	# apply rule only if there are no existing assignments or if allow_multiple_assignments is enabled
+	for assignment_rule in assignment_rule_docs:
+		if assignment_rule.is_rule_not_applicable_today():
+			continue
 
-			new_apply = assignment_rule.apply_assign(doc)
-			if new_apply:
+		# skip if assignments exist and this rule doesn't allow multiple assignments
+		if assignments and not clear and not assignment_rule.allow_multiple_assignments:
+			continue
+
+		new_apply = assignment_rule.apply_assign(doc)
+		if new_apply:
+			# Only break if multiple assignments are not allowed
+			if not assignment_rule.allow_multiple_assignments:
 				break
 
 	# apply close rule only if assignments exists

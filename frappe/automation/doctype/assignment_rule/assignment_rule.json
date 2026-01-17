@@ -12,6 +12,7 @@
   "due_date_based_on",
   "priority",
   "disabled",
+  "allow_multiple_assignments",
   "column_break_4",
   "description",
   "assignment_rules_section",
@@ -48,6 +49,13 @@
    "fieldname": "disabled",
    "fieldtype": "Check",
    "label": "Disabled"
+  },
+  {
+   "default": "0",
+   "description": "If enabled, assignments will be added even if the document already has someone assigned",
+   "fieldname": "allow_multiple_assignments",
+   "fieldtype": "Check",
+   "label": "Allow Multiple Assignments"
   },
   {
    "fieldname": "column_break_4",
