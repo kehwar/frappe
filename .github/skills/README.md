@@ -24,6 +24,31 @@ Expert guidance for setting up CI/CD tests for Frappe apps using GitHub Actions.
 - `references/test-execution.md` - Test running strategies
 - `references/ci-patterns.md` - Best practices and patterns
 
+### frappe-hooks-expert
+
+Expert guidance on Frappe hooks system for extending framework functionality. Use this when you need help with:
+- Implementing document lifecycle hooks (doc_events)
+- Setting up permission hooks for custom access control
+- Configuring scheduler hooks for background tasks
+- Adding UI customization hooks
+- Understanding hook execution order
+- Troubleshooting hook issues
+
+**Location:** `.github/skills/frappe-hooks-expert/`
+
+**Key files:**
+- `SKILL.md` - Main skill documentation and overview
+- `references/document-hooks.md` - Complete doc_events reference with 20+ examples
+- `references/permission-hooks.md` - Permission extension hooks
+- `references/scheduler-hooks.md` - Scheduled task configuration
+- `references/ui-hooks.md` - Frontend customization hooks
+- `references/jinja-hooks.md` - Template rendering hooks
+- `references/request-job-hooks.md` - Request and job lifecycle hooks
+- `references/other-hooks.md` - Additional hooks and extension points
+- `references/execution-order.md` - Hook execution sequences
+- `references/best-practices.md` - Patterns and guidelines
+- `references/debugging-hooks.md` - Troubleshooting guide
+
 ### skill-creator
 
 The skill-creator provides comprehensive guidance for creating effective skills. Use this when you want to create a new skill or update an existing skill that extends capabilities with specialized knowledge, workflows, or tool integrations.
