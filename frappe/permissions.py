@@ -1016,6 +1016,9 @@ def check_write_permission_query_conditions(doc, permtype="write", user=None):
 	
 	if user == "Administrator":
 		return True
+
+	if permtype not in ("create", "write", "submit", "cancel", "delete"):
+		return True
 	
 	doctype = doc.doctype
 	hooks = frappe.get_hooks("write_permission_query_conditions", {})
