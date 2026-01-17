@@ -80,7 +80,7 @@ def get_transitions(
 
 def get_workflow_safe_globals():
 	# access to frappe.db.get_value, frappe.db.get_list, and date time utils.
-	return dict(
+	out = dict(
 		frappe=frappe._dict(
 			db=frappe._dict(get_value=frappe.db.get_value, get_list=frappe.db.get_list),
 			session=frappe.session,
@@ -92,6 +92,15 @@ def get_workflow_safe_globals():
 			),
 		)
 	)
+
+	# hooks to extend workflow safe globals
+	for hook in frappe.get_hooks("workflow_safe_eval_globals"):
+		hook_method = frappe.get_attr(hook)
+		hook_data = hook_method(out)
+		if isinstance(hook_data, dict):
+			out.update(hook_data)
+
+	return out
 
 
 def is_transition_condition_satisfied(transition, doc) -> bool:
