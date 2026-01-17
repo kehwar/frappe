@@ -298,7 +298,7 @@ def has_permission(
 
 	# For write, create, submit, cancel, delete actions, also check write permission query conditions
 	if perm and doc and ptype in ("write", "create", "submit", "cancel", "delete"):
-		if not check_write_permission_query_conditions(doc, permtype=ptype, user=user, debug=debug):
+		if not check_write_permission_query_conditions(doc, ptype=ptype, user=user, debug=debug):
 			debug and _debug_log("Document does not satisfy write permission query conditions")
 			push_perm_check_log(
 				_("User {0} does not have access to this document based on write permission query conditions").format(
@@ -1011,7 +1011,7 @@ def _get_parent_and_ancestors(doctype, parent):
 	yield from get_ancestors_of(doctype, parent)
 
 
-def check_write_permission_query_conditions(doc, permtype="write", user=None, debug=None):
+def check_write_permission_query_conditions(doc, ptype="write", user=None, debug=None):
 	"""Check if document passes write permission query conditions.
 	
 	This is called after DB write but before commit to validate the record
@@ -1019,7 +1019,7 @@ def check_write_permission_query_conditions(doc, permtype="write", user=None, de
 	For delete operations, this is called before the record is deleted.
 	
 	:param doc: Document object to check
-	:param permtype: Permission type being checked (e.g., "create", "write", "submit", "cancel", "delete")
+	:param ptype: Permission type being checked (e.g., "create", "write", "submit", "cancel", "delete")
 	:param user: User to check permissions for (defaults to current user)
 	:return: True if document passes, False otherwise
 	"""
@@ -1038,14 +1038,14 @@ def check_write_permission_query_conditions(doc, permtype="write", user=None, de
 		return True
 	
 	# When checking create, submit, cancel, or delete, also check write
-	permtypes_to_check = [permtype]
-	if permtype in ("create", "submit", "cancel", "delete"):
+	permtypes_to_check = [ptype]
+	if ptype in ("create", "submit", "cancel", "delete"):
 		permtypes_to_check.append("write")
 	
 	conditions = []
 	for method in condition_methods:
 		for ptype in permtypes_to_check:
-			condition = frappe.call(frappe.get_attr(method), user=user, doctype=doctype, permtype=ptype)
+			condition = frappe.call(frappe.get_attr(method), user=user, doctype=doctype, ptype=ptype)
 			if condition:
 				conditions.append(f"({condition})")
 	
