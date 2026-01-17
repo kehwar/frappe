@@ -258,30 +258,6 @@ class Document(BaseDocument):
 		)
 		raise frappe.PermissionError
 
-	def check_write_permission_query_conditions(self, permtype="write", rollback_on_failure=False):
-		"""Check if document passes write permission query conditions.
-		
-		Permission query conditions check against the database record, so timing varies:
-		- Insert: Check AFTER DB write (record must exist to query)
-		- Update: Check BEFORE and AFTER DB write
-		- Delete: Check BEFORE DB delete (record won't exist after)
-		
-		If check fails after a DB write, the transaction is rolled back.
-		
-		:param permtype: Permission type being checked (e.g., "create", "write", "submit", "cancel", "delete")
-		:param rollback_on_failure: If True, rollback the transaction if check fails
-		"""
-		if self.flags.ignore_permissions:
-			return
-		
-		from frappe.permissions import check_write_permission_query_conditions
-		
-		if not check_write_permission_query_conditions(self, permtype=permtype):
-			if rollback_on_failure:
-				frappe.db.rollback()
-			# Use existing error handling
-			self._handle_permission_failure(permtype)
-
 	def insert(
 		self,
 		ignore_permissions=None,
@@ -347,8 +323,7 @@ class Document(BaseDocument):
 		for d in self.get_all_children():
 			d.db_insert()
 
-		# Check write permission query conditions after DB insert (record must exist in DB for query conditions to work)
-		self.check_write_permission_query_conditions(permtype="create", rollback_on_failure=True)
+		self.check_permission("create")
 
 		self.run_method("after_insert")
 		self.flags.in_insert = True
@@ -448,19 +423,6 @@ class Document(BaseDocument):
 
 		self.set_docstatus()
 
-		# Determine permtype based on action
-		if self._action == "submit":
-			permtype = "submit"
-		elif self._action == "cancel":
-			permtype = "cancel"
-		elif self._action == "update_after_submit":
-			permtype = "submit"
-		else:
-			permtype = "write"
-
-		# Check write permission query conditions before DB write
-		self.check_write_permission_query_conditions(permtype=permtype, rollback_on_failure=False)
-
 		# parent
 		if self.meta.issingle:
 			self.update_single(self.get_valid_dict())
@@ -468,9 +430,8 @@ class Document(BaseDocument):
 			self.db_update()
 
 		self.update_children()
-
-		# Check write permission query conditions after DB write
-		self.check_write_permission_query_conditions(permtype=permtype, rollback_on_failure=True)
+		
+		self.check_permission("write", "save")
 		
 		self.run_post_save_methods()
 
