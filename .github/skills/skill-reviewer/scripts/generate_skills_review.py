@@ -252,14 +252,6 @@ Review all files in the skill directory:
 
 - [ ]
 
-
-## Sign-off
-
-- [ ] Review completed by: ___________
-- [ ] Changes committed: Yes / No
-- [ ] Skill updated: Yes / No
-- [ ] Date: ___________
-
 """
 
     # Create output directory if needed

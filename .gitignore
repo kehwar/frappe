@@ -192,3 +192,5 @@ cypress/videos
 
 # JetBrains IDEs
 .idea/
+# Skill reviews (session-only, not committed)
+docs/skills-review/
