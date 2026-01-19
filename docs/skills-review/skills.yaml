@@ -4,42 +4,42 @@
 # Set enabled: true for skills you want to review
 # Then run: python .github/skills/skill-reviewer/scripts/generate_skills_review.py --create-reviews
 
-generated: '2026-01-19T15:41:12.891858'
+generated: '2026-01-19T15:44:16.735974'
 total_skills: 10
 skills:
 - name: assignments-expert
   path: .github/skills/assignments-expert/SKILL.md
-  enabled: false
+  enabled: true
   description: Expert guidance on Frappe assignments system including Assignment Rules
     (auto-assignment with round ...
 - name: bench-commands
   path: .github/skills/bench-commands/SKILL.md
-  enabled: false
+  enabled: true
   description: Comprehensive reference for Frappe bench CLI commands including site
     management, app installation, b...
 - name: doctype-schema-expert
   path: .github/skills/doctype-schema-expert/SKILL.md
-  enabled: false
+  enabled: true
   description: Expert guidance on Frappe DocType schemas including JSON structure,
     field types, properties, naming ...
 - name: frappe-ci-expert
   path: .github/skills/frappe-ci-expert/SKILL.md
-  enabled: false
+  enabled: true
   description: Expert guidance for setting up CI/CD tests for Frappe apps. Use when
     users ask about GitHub Actions ...
 - name: frappe-hooks-expert
   path: .github/skills/frappe-hooks-expert/SKILL.md
-  enabled: false
+  enabled: true
   description: Expert guidance on Frappe hooks system including application hooks,
     document events (doc_events), pe...
 - name: permissions-expert
   path: .github/skills/permissions-expert/SKILL.md
-  enabled: false
+  enabled: true
   description: Expert guidance on Frappe permissions system including permission evaluation
     flow, extension hooks (...
 - name: report-expert
   path: .github/skills/report-expert/SKILL.md
-  enabled: false
+  enabled: true
   description: Expert guidance on Frappe reports including report types, structure,
     creation workflow, and best pra...
 - name: skill-creator
@@ -54,6 +54,6 @@ skills:
     code, fix inconsistencies, and ma...
 - name: workflow-expert
   path: .github/skills/workflow-expert/SKILL.md
-  enabled: false
+  enabled: true
   description: Expert guidance on Frappe Workflow system including workflow structure,
     states and transitions, work...
