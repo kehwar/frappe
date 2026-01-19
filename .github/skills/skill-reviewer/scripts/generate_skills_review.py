@@ -113,6 +113,16 @@ def generate_skills_yaml(skills, output_path):
     # Create output directory if needed
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # Create .gitignore to exclude review markdown files from git
+    gitignore_path = output_path.parent / ".gitignore"
+    if not gitignore_path.exists():
+        with open(gitignore_path, "w", encoding="utf-8") as f:
+            f.write(
+                "# Skill review markdown files are session-only and should not be committed\n"
+            )
+            f.write("*.md\n")
+        print(f"✓ Created {gitignore_path}")
+
     # Write YAML
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("# Skills Review Inventory\n")
@@ -268,6 +278,19 @@ def create_review_files(skills_yaml_path, output_dir, force=False):
     """
     Create review files for all enabled skills.
     """
+    # Create output directory if needed
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create .gitignore to exclude review markdown files from git
+    gitignore_path = output_dir / ".gitignore"
+    if not gitignore_path.exists():
+        with open(gitignore_path, "w", encoding="utf-8") as f:
+            f.write(
+                "# Skill review markdown files are session-only and should not be committed\n"
+            )
+            f.write("*.md\n")
+        print(f"✓ Created {gitignore_path}")
+
     # Load skills.yaml
     try:
         with open(skills_yaml_path, "r", encoding="utf-8") as f:
