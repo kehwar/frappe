@@ -28,7 +28,7 @@ def calculate_hash(path: str) -> str:
 
 
 ignore_values = {
-	"Report": ["disabled", "prepared_report", "add_total_row"],
+	"Report": ["disabled", "add_total_row"],
 	"Print Format": ["disabled"],
 	"Notification": ["enabled"],
 	"Print Style": ["disabled"],

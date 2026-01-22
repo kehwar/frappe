@@ -85,7 +85,6 @@ class Report(Document):
 
 	def before_export(self, doc):
 		doc.letterhead = None
-		doc.prepared_report = 0
 
 	def on_trash(self):
 		if (
