@@ -3,10 +3,45 @@
 ## Translation System Overview
 
 Frappe supports two translation systems:
-- **Legacy**: CSV files (older, being phased out)
-- **Modern**: POT/PO/MO files (gettext standard, recommended)
+- **Modern (Recommended)**: POT/PO/MO files (gettext standard)
+  - Industry standard format
+  - Better tooling support (Poedit, Weblate, etc.)
+  - Easier to manage and maintain
+  - Supports context and pluralization
+  - **This is the preferred method for all new projects**
+- **Legacy**: CSV files (older, deprecated)
+  - Being phased out
+  - Limited tooling support
+  - Only use for compatibility with older branches
 
-Both systems can coexist during migration.
+**Always use POT/PO/MO files for new translation work.** Both systems can coexist during migration, but prefer PO/POT for all new translations.
+
+## Quick Translation Update (Most Common)
+
+When users ask to "add missing translations", "update translations", or "regenerate translations", they typically mean running the full regeneration workflow:
+
+```bash
+# Complete translation update for soldamundo app
+cd /workspace/development/frappe-bench
+
+# Step 1: Regenerate POT file (extract all translatable strings)
+bench --site development.localhost generate-pot-file --app soldamundo
+
+# Step 2: Update PO files (merge new strings into existing translations)
+bench --site development.localhost update-po-files --app soldamundo --locale es_PE
+
+# Step 3: Compile PO to MO (convert to binary format for runtime)
+bench --site development.localhost compile-po-to-mo --app soldamundo
+
+# Step 4: Build message files and clear cache
+bench --site development.localhost build-message-files && bench clear-cache
+```
+
+**Important Notes:**
+- Use underscore format for locales: `es_PE` not `es-PE`
+- POT/PO files are in `app/locale/` directory (not `app/translations/`)
+- After updating translations, manually edit the PO file to add Spanish translations for empty `msgstr` entries
+- Always clear cache after translation changes
 
 ## Modern Translation Workflow (POT/PO/MO)
 

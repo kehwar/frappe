@@ -93,10 +93,13 @@ See [references/job-queue.md](references/job-queue.md) for:
 
 ### Translation Operations
 See [references/translation-operations.md](references/translation-operations.md) for:
+- **Quick translation update** (regenerate POT/PO/MO files - most common)
 - Complete translation workflow (POT/PO/MO)
 - CSV to PO migration
 - Translation compilation
 - Managing translations for multiple locales
+
+**Common request**: When users say "add missing translations" or "update translations", run the quick translation update workflow documented in the reference file.
 
 ### Utilities
 See [references/utilities.md](references/utilities.md) for:
