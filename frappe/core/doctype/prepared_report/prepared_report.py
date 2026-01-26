@@ -105,6 +105,8 @@ def generate_report(prepared_report):
 
 	add_data_to_monitor(report=instance.report_name)
 
+	frappe.set_user_lang(instance.owner) # Set user language for translations
+
 	try:
 		report.custom_columns = []
 
