@@ -283,7 +283,7 @@ with change_settings("System Settings", enable_password_policy=1):
 Mock datetime:
 
 ```python
-with self.freeze_time("2023-01-01 10:00:00"):
+with self.freeze_time("2024-01-01 10:00:00"):
     # Time is frozen
     pass
 ```
