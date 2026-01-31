@@ -423,6 +423,49 @@ class TestWithCleanup(FrappeTestCase):
         self.assertTrue(frappe.db.exists("Note", doc.name))
 ```
 
+## Server Scripts / Safe Exec Test
+
+```python
+from frappe.tests.utils import FrappeTestCase
+import frappe
+
+class TestScriptReport(FrappeTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # Enable server script execution for this test class
+        cls.enable_safe_exec()
+    
+    def test_script_report_execution(self):
+        # Create a script report for testing
+        report = frappe.get_doc({
+            "doctype": "Report",
+            "ref_doctype": "User",
+            "report_name": "Test Script Report",
+            "report_type": "Script Report",
+            "is_standard": "No",
+            "module": "Custom",
+            "query": "SELECT name, email FROM `tabUser`"
+        }).insert()
+        
+        self.addCleanup(lambda: frappe.delete_doc("Report", report.name))
+        
+        # Execute the report - requires safe_exec to be enabled
+        columns, data = report.execute_script()
+        
+        self.assertTrue(len(columns) > 0)
+        self.assertTrue(len(data) > 0)
+    
+    def test_server_script(self):
+        # Test server script execution
+        from frappe.utils.safe_exec import safe_exec
+        
+        _locals = {"result": None}
+        safe_exec('result = frappe.utils.cint("42")', None, _locals)
+        
+        self.assertEqual(_locals["result"], 42)
+```
+
 ## Report Test
 
 ```python

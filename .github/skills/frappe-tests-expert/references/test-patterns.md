@@ -76,6 +76,45 @@ def test_something(self):
     # Test code
 ```
 
+### Enabling Server Scripts
+
+For tests that need to execute server scripts or use safe exec functionality:
+
+```python
+@classmethod
+def setUpClass(cls):
+    super().setUpClass()  # ALWAYS call super()
+    cls.enable_safe_exec()  # Enable server script execution
+```
+
+**Use cases:**
+- Testing Script Reports (reports with custom Python code)
+- Testing Server Scripts
+- Testing custom permission queries with server-side scripts
+- Any functionality requiring `safe_exec`
+
+**How it works:**
+- Enables `server_script_enabled` in site config
+- Automatically disables it after test class completes via `addClassCleanup`
+- Prevents server scripts from running in other tests
+
+**Example:**
+
+```python
+from frappe.tests.utils import FrappeTestCase
+
+class TestScriptReport(FrappeTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.enable_safe_exec()
+    
+    def test_report_execution(self):
+        # Server scripts can now execute
+        result = frappe.get_doc("Report", "Script Report").execute()
+        self.assertTrue(result)
+```
+
 ## Test Dependencies and Fixtures
 
 ### Declaring Dependencies

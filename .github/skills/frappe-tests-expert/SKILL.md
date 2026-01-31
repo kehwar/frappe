@@ -130,6 +130,30 @@ class TestWorkflow(FrappeTestCase):
         # Test code
 ```
 
+### Enabling Server Scripts
+
+When tests need to execute server scripts or use safe exec functionality (e.g., for testing reports with script, custom permissions, or server scripts), enable it in `setUpClass`:
+
+```python
+class TestQueryReport(FrappeTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()  # REQUIRED
+        cls.enable_safe_exec()  # Enable server script execution
+    
+    def test_script_report(self):
+        # Now server scripts can be executed
+        result = frappe.get_doc("Report", "My Script Report").execute()
+```
+
+**When to use:**
+- Testing Script Reports (reports with custom Python code)
+- Testing Server Scripts
+- Testing custom permission queries with scripts
+- Any test that requires `safe_exec` functionality
+
+**Note:** `enable_safe_exec()` automatically disables server scripts after the test class completes via `addClassCleanup`.
+
 ### Helper Functions
 
 Create module-level helper functions for reusable test setup:
