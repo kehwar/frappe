@@ -82,6 +82,7 @@ def build_response(response_type=None):
 		"csv": as_csv,
 		"txt": as_txt,
 		"download": as_raw,
+		"asset": as_asset,
 		"json": as_json,
 		"pdf": as_pdf,
 		"page": as_page,
@@ -124,6 +125,17 @@ def as_raw():
 		"Content-Disposition",
 		frappe.response.get("display_content_as", "attachment"),
 		filename=filename,
+	)
+	response.data = frappe.response["filecontent"]
+	return response
+
+
+def as_asset():
+	response = Response()
+	response.mimetype = (
+		frappe.response.get("content_type")
+		or mimetypes.guess_type(frappe.response["filename"])[0]
+		or "application/unknown"
 	)
 	response.data = frappe.response["filecontent"]
 	return response
