@@ -63,6 +63,18 @@ def main(
 		with open(frappe.get_app_path(app, doctype_list_path)) as f:
 			doctype = f.read().strip().splitlines()
 
+	if module:
+		# Convert file path to module path if needed
+		if "/" in module or module.endswith(".py"):
+			# Remove .py extension if present
+			if module.endswith(".py"):
+				module = module[:-3]
+			# Replace slashes with dots
+			module = module.replace("/", ".")
+			# Remove leading/trailing dots
+			module = module.strip(".")
+		app = module.split(".")[0]
+
 	xmloutput_fh = None
 	if junit_xml_output:
 		xmloutput_fh = open(junit_xml_output, "wb")
