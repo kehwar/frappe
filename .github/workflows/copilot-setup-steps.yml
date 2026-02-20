@@ -1,0 +1,27 @@
+name: "Copilot Setup Steps"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Clone and copy skills to project root
+        run: |
+          git clone https://github.com/kehwar/skills.git /tmp/skills-repo
+          mkdir -p ./.github/skills
+          cp -r /tmp/skills-repo/skills/* ./.github/skills/
+          rm -rf /tmp/skills-repo
