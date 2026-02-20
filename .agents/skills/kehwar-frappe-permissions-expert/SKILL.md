@@ -1,5 +1,5 @@
 ---
-name: permissions-expert
+name: kehwar-frappe-permissions-expert
 description: Expert guidance on Frappe permissions system including permission evaluation flow, extension hooks (has_permission, permission_query_conditions, write_permission_query_conditions, has_website_permission, filter_workflow_transitions, has_workflow_action_permission), role-based permissions, user permissions, share permissions, permission levels, and workflow permissions. Use when implementing custom permission logic, troubleshooting permission issues, understanding permission query conditions, working with child table permissions, virtual DocType permissions, workflow transition filtering, approval routing, or debugging access control problems.
 ---
 

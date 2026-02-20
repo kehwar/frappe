@@ -1,5 +1,5 @@
 ---
-name: assignments-expert
+name: kehwar-frappe-assignments-expert
 description: Expert guidance on Frappe assignments system including Assignment Rules (auto-assignment with round robin, load balancing, and field-based rules), ToDo management (task assignments, status tracking, and operations), and assign_to.py module (programmatic assignment operations). Use when creating or modifying assignment rules, working with ToDo documents, implementing auto-assignment logic, troubleshooting assignment issues, or understanding assignment workflows and notifications.
 ---
 
@@ -108,7 +108,7 @@ assign_to.clear("Issue", "ISS-001")
 
 ```python
 # Get assignments for a document
-todos = frappe.get_all("ToDo", 
+todos = frappe.get_all("ToDo",
     filters={
         "reference_type": "Issue",
         "reference_name": "ISS-001",
@@ -169,7 +169,7 @@ ToDo documents track task assignments with status and lifecycle management.
 
 Users can view ToDo if they are:
 - The allocated_to user
-- The assigned_by user  
+- The assigned_by user
 - Have role permission for ToDo DocType
 
 **When to read:** See [references/todo-management.md](references/todo-management.md) for ToDo operations with comprehensive examples including querying, creating, updating, and permission handling.
@@ -375,7 +375,7 @@ from frappe.automation.doctype.assignment_rule.assignment_rule import get_assign
 rules = get_assignment_rules()
 
 # Check assignments for document
-todos = frappe.get_all("ToDo", 
+todos = frappe.get_all("ToDo",
     filters={"reference_type": "Issue", "reference_name": "ISS-001"},
     fields=["*"]
 )
@@ -404,16 +404,16 @@ class TestAssignments(FrappeTestCase):
             "rule": "Round Robin",
             "users": [{"user": "test@example.com"}]
         }).insert()
-        
+
         # Create document
         issue = frappe.get_doc({
             "doctype": "Issue",
             "subject": "Test",
             "status": "Open"
         }).insert()
-        
+
         # Verify assignment
-        todos = frappe.get_all("ToDo", 
+        todos = frappe.get_all("ToDo",
             filters={"reference_name": issue.name}
         )
         self.assertEqual(len(todos), 1)

@@ -1,5 +1,5 @@
 ---
-name: doctype-schema-expert
+name: kehwar-frappe-doctype-schema-expert
 description: Expert guidance on Frappe DocType schemas including JSON structure, field types, properties, naming conventions, and best practices. Use when creating, modifying, or analyzing DocType JSON files, understanding DocType structure, working with field definitions, configuring DocType properties, or troubleshooting schema-related issues.
 ---
 

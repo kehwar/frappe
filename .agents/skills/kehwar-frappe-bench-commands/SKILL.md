@@ -1,5 +1,5 @@
 ---
-name: bench-commands
+name: kehwar-frappe-bench-commands
 description: Comprehensive reference for Frappe bench CLI commands including site management, app installation, backup/restore, database operations, migrations, and development workflows. Use when users ask about bench commands, site setup, database operations, backup/restore procedures, MariaDB configuration, or common development workflows in Frappe.
 ---
 

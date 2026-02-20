@@ -1,5 +1,5 @@
 ---
-name: report-expert
+name: kehwar-frappe-report-expert
 description: Expert guidance on Frappe reports including report types, structure, creation workflow, and best practices. Use when creating standard script reports, query reports, understanding report structure, working with columns and filters, or troubleshooting report-related issues.
 ---
 

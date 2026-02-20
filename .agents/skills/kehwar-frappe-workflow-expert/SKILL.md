@@ -1,5 +1,5 @@
 ---
-name: workflow-expert
+name: kehwar-frappe-workflow-expert
 description: Expert guidance on Frappe Workflow system including workflow structure, states and transitions, workflow actions, email notifications, permission hooks (before_transition, after_transition, filter_workflow_transitions, has_workflow_action_permission), and best practices. Use when creating workflows, implementing workflow logic, understanding state transitions, working with workflow actions, configuring email notifications, or troubleshooting workflow-related issues.
 ---
 
@@ -185,12 +185,12 @@ def after_transition(self, transition):
 def filter_workflow_transitions(doc, transitions, workflow):
     """
     Filter or modify transitions before displaying to user.
-    
+
     Args:
         doc: Document instance
         transitions: List of available transition dicts
         workflow: Workflow document
-        
+
     Returns:
         List of filtered/modified transitions or None
     """
@@ -212,12 +212,12 @@ def filter_workflow_transitions(doc, transitions, workflow):
 def has_workflow_action_permission(user, transition, doc):
     """
     Check if user should receive workflow action for this transition.
-    
+
     Args:
         user: User email
         transition: Transition dict
         doc: Document instance
-        
+
     Returns:
         bool: True if user should get action, False otherwise
     """
@@ -239,10 +239,10 @@ def has_workflow_action_permission(user, transition, doc):
 def get_workflow_globals(current_globals):
     """
     Add custom functions or data for workflow conditions.
-    
+
     Args:
         current_globals: Dict of currently available globals
-        
+
     Returns:
         dict: Additional globals to make available
     """
@@ -283,8 +283,8 @@ doc.grand_total > 10000
 
 # Transition only if created within last 7 days
 doc.creation > frappe.utils.add_to_date(
-    frappe.utils.now_datetime(), 
-    days=-7, 
+    frappe.utils.now_datetime(),
+    days=-7,
     as_datetime=True
 )
 ```
@@ -439,7 +439,7 @@ transitions = get_transitions(doc)
 print(transitions)
 
 # Check workflow actions
-actions = frappe.get_all("Workflow Action", 
+actions = frappe.get_all("Workflow Action",
     filters={"reference_name": doc.name, "status": "Open"},
     fields=["*"]
 )

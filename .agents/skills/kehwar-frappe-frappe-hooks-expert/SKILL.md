@@ -1,5 +1,5 @@
 ---
-name: frappe-hooks-expert
+name: kehwar-frappe-frappe-hooks-expert
 description: Expert guidance on Frappe hooks system including application hooks, document events (doc_events), permission hooks, scheduler hooks, UI hooks, jinja filters, installation hooks, and other extension points. Use when implementing custom hooks, understanding hook execution order, registering hooks in hooks.py, troubleshooting hook issues, or extending Frappe framework functionality.
 ---
 
@@ -271,11 +271,11 @@ def on_update(doc, method=None):
     # Only process specific doctypes
     if doc.doctype != "Target DocType":
         return
-    
+
     # Only process when field changes
     if not doc.has_value_changed("status"):
         return
-    
+
     # Your logic here
 ```
 
@@ -329,7 +329,7 @@ def test_my_hook():
         "field": "value"
     })
     doc.insert()  # Triggers hooks
-    
+
     # Verify hook effects
     assert some_condition
 ```

@@ -1,5 +1,5 @@
 ---
-name: frappe-tests-expert
+name: kehwar-frappe-frappe-tests-expert
 description: Expert guidance on writing tests for Frappe framework applications including test structure, setup/teardown patterns, FrappeTestCase usage, fixtures, database transactions, user context management, mocking, custom assertions, and best practices. Use when creating new tests, debugging test failures, understanding test patterns, working with test fixtures, setting up test data, testing permissions, workflows, or any testing-related tasks in Frappe or ERPNext applications.
 ---
 
@@ -22,13 +22,13 @@ class TestMyFeature(FrappeTestCase):
     def setUpClass(cls):
         super().setUpClass()  # REQUIRED: Always call super()
         # One-time setup
-    
+
     def test_basic_functionality(self):
         doc = frappe.get_doc({
             "doctype": "ToDo",
             "description": "Test ToDo"
         }).insert()
-        
+
         self.assertEqual(doc.docstatus, 0)
 ```
 
@@ -114,16 +114,16 @@ class TestWorkflow(FrappeTestCase):
         """One-time setup before all tests in this class"""
         super().setUpClass()  # REQUIRED
         make_test_records("User")
-    
+
     def setUp(self):
         """Setup before each test method"""
         frappe.set_user("Administrator")
         frappe.db.delete("Workflow Action")
-    
+
     def tearDown(self):
         """Cleanup after each test method"""
         frappe.set_user("Administrator")
-    
+
     def test_something(self):
         # Use addCleanup for guaranteed cleanup
         self.addCleanup(lambda: frappe.delete_doc("Note", "test-note"))
@@ -140,7 +140,7 @@ class TestQueryReport(FrappeTestCase):
     def setUpClass(cls):
         super().setUpClass()  # REQUIRED
         cls.enable_safe_exec()  # Enable server script execution
-    
+
     def test_script_report(self):
         # Now server scripts can be executed
         result = frappe.get_doc("Report", "My Script Report").execute()
@@ -347,7 +347,7 @@ with patch_hooks({"my_hook": ["custom_handler"]}):
 def test_user_permission(self):
     frappe.set_user("test@example.com")
     doc = frappe.get_doc("Blog Post", "my-post")
-    
+
     self.assertTrue(doc.has_permission("read"))
     self.assertFalse(doc.has_permission("write"))
 ```
@@ -360,7 +360,7 @@ from frappe.model.workflow import apply_workflow
 def test_workflow_transition(self):
     doc = create_test_doc()
     self.assertEqual(doc.workflow_state, "Pending")
-    
+
     apply_workflow(doc, "Approve")
     self.assertEqual(doc.workflow_state, "Approved")
 ```
@@ -386,7 +386,7 @@ def test_api_endpoint(self):
         "doctype": "User",
         "name": "Administrator"
     })
-    
+
     result = frappe.client.get("User", "Administrator")
     self.assertEqual(result.get("name"), "Administrator")
 ```

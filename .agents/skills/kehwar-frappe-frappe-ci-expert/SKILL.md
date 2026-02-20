@@ -1,5 +1,5 @@
 ---
-name: frappe-ci-expert
+name: kehwar-frappe-frappe-ci-expert
 description: Expert guidance for setting up CI/CD tests for Frappe apps. Use when users ask about GitHub Actions workflows, CI test setup, continuous integration for Frappe apps, running tests in CI environments, database setup for CI, bench configuration in CI, or automating tests for Frappe/ERPNext applications.
 ---
 
