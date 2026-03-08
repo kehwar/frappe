@@ -205,3 +205,19 @@ RQ_FAILED_JOBS_LIMIT = 1000               # max stored failed jobs
 RQ_RESULTS_TTL       = 10 * 60           # successful results kept 10 min
 MAX_QUEUED_JOBS      = 500               # enqueue raises if queue exceeds this
 ```
+
+## Implementation Reference
+
+For internals and debugging details, read `references/implementation.md`. It covers:
+
+- `execute_job` source with retry and hook flow
+- `enqueue_after_commit` deferred-commit mechanism
+- Deduplication logic and edge cases
+- Redis connection, queue naming, and worker polling
+- `frappe.local.job` context object
+- Queue overflow guard (`QueueOverloaded`)
+- Failed-job registry pruning
+- `CallbackManager` internals
+- Error logging during jobs
+- `RQ Job` DocType API for stopping/cancelling jobs
+- Debugging checklist with common issues and fixes
