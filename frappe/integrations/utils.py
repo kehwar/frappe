@@ -31,7 +31,6 @@ def make_request(method, url, auth=None, headers=None, data=None, json=None, par
 				return response.text
 		return
 	except Exception as exc:
-		frappe.log_error()
 		raise exc
 
 

@@ -15,7 +15,7 @@ LOCKS_DIR = "locks"
 
 
 @contextmanager
-def filelock(lock_name: str, *, timeout=30, is_global=False, raise_exception=True):
+def filelock(lock_name: str, *, timeout=30, is_global=False):
 	"""Create a lockfile to prevent concurrent operations acrosss processes.
 
 	args:
@@ -40,10 +40,6 @@ def filelock(lock_name: str, *, timeout=30, is_global=False, raise_exception=Tru
 		with _StrongFileLock(lock_path, timeout=timeout):
 			yield
 	except Timeout as e:
-		if not raise_exception:
-			return
-		frappe.log_error("Filelock: Failed to aquire {lock_path}")
-
 		raise LockTimeoutError(
 			_("Failed to aquire lock: {}. Lock may be held by another process.").format(lock_name)
 			+ "<br>"
