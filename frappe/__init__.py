@@ -2047,6 +2047,29 @@ def get_all(doctype, *args, **kwargs):
 	return get_list(doctype, *args, **kwargs)
 
 
+def get_all_docs(doctype, *args, **kwargs):
+	"""Like `frappe.get_all`, but yields Document instances instead of dicts.
+
+	Ignores `fields`, `pluck`, `as_list`, and `as_dict` kwargs — always fetches
+	names and resolves each to a full Document via `frappe.get_doc`.
+
+	All other kwargs (filters, order_by, limit_start, limit_page_length, etc.)
+	are forwarded to `frappe.get_all`.
+
+	:param doctype: DocType on which query is to be made.
+
+	Example usage:
+
+	        for doc in frappe.get_docs("Sales Order", filters={"docstatus": 0}):
+	            doc.submit()
+	"""
+	for key in ("fields", "pluck", "as_list"):
+		kwargs.pop(key, None)
+	kwargs["as_dict"] = False
+	names = get_all(doctype, *args, pluck="name", **kwargs)
+	return [get_doc(doctype, name) for name in names]
+
+
 def get_value(*args, **kwargs):
 	"""Returns a document property or list of properties.
 
