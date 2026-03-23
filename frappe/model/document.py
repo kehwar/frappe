@@ -1131,17 +1131,11 @@ class Document(BaseDocument):
 
 		:param method: 'Delete' or 'Cancel' — controls which link types are checked.
 		"""
-		from frappe.model.delete_doc import (
-		    check_if_doc_is_dynamically_linked,
-		    check_if_doc_is_linked,
-		)
+		from frappe.model.delete_doc import _check_if_doc_is_dynamically_linked, _check_if_doc_is_linked
 
-		try:
-			check_if_doc_is_linked(self, method=method)
-			check_if_doc_is_dynamically_linked(self, method=method)
-			return False
-		except frappe.LinkExistsError:
-			return True
+		return next(_check_if_doc_is_linked(self, method=method), None) is not None or next(
+			_check_if_doc_is_dynamically_linked(self, method=method), None
+		) is not None
 
 	def get_linked_docs(self) -> dict[str, list]:
 		"""Return all documents that reference this document, grouped by doctype.

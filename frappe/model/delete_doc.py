@@ -261,9 +261,10 @@ def check_permission_and_not_submitted(doc):
 		)
 
 
-def check_if_doc_is_linked(doc, method="Delete"):
-	"""
-	Raises excption if the given doc(dt, dn) is linked in another record.
+def _check_if_doc_is_linked(doc, method="Delete"):
+	"""Yield ``(doc, reference_doctype, reference_docname, row)`` for each static link found.
+
+	Does not raise; use :func:`check_if_doc_is_linked` to raise on the first match.
 	"""
 	from frappe.model.rename_doc import get_link_fields
 
@@ -290,7 +291,7 @@ def check_if_doc_is_linked(doc, method="Delete"):
 
 		if issingle:
 			if frappe.db.get_single_value(link_dt, link_field) == doc.name:
-				raise_link_exists_exception(doc, link_dt, link_dt)
+				yield (doc, link_dt, link_dt, "")
 			continue
 
 		fields = ["name", "docstatus"]
@@ -316,11 +317,22 @@ def check_if_doc_is_linked(doc, method="Delete"):
 				continue
 			else:
 				reference_docname = item_parent or item.name
-				raise_link_exists_exception(doc, linked_parent_doctype, reference_docname)
+				yield (doc, linked_parent_doctype, reference_docname, "")
 
 
-def check_if_doc_is_dynamically_linked(doc, method="Delete"):
-	"""Raise `frappe.LinkExistsError` if the document is dynamically linked"""
+def check_if_doc_is_linked(doc, method="Delete"):
+	"""
+	Raises exception if the given doc(dt, dn) is linked in another record.
+	"""
+	for args in _check_if_doc_is_linked(doc, method=method):
+		raise_link_exists_exception(*args)
+
+
+def _check_if_doc_is_dynamically_linked(doc, method="Delete"):
+	"""Yield ``(doc, reference_doctype, reference_docname, row)`` for each dynamic link found.
+
+	Does not raise; use :func:`check_if_doc_is_dynamically_linked` to raise on the first match.
+	"""
 	for df in get_dynamic_link_map().get(doc.doctype, []):
 		ignore_linked_doctypes = doc.get("ignore_linked_doctypes") or []
 
@@ -344,7 +356,7 @@ def check_if_doc_is_dynamically_linked(doc, method="Delete"):
 					or (method == "Cancel" and DocStatus(refdoc.docstatus).is_submitted())
 				)
 			):
-				raise_link_exists_exception(doc, df.parent, df.parent)
+				yield (doc, df.parent, df.parent, "")
 		else:
 			# dynamic link in table
 			df["table"] = ", `parent`, `parenttype`, `idx`" if meta.istable else ""
@@ -370,7 +382,13 @@ def check_if_doc_is_dynamically_linked(doc, method="Delete"):
 
 					at_position = f"at Row: {refdoc.idx}" if meta.istable else ""
 
-					raise_link_exists_exception(doc, reference_doctype, reference_docname, at_position)
+					yield (doc, reference_doctype, reference_docname, at_position)
+
+
+def check_if_doc_is_dynamically_linked(doc, method="Delete"):
+	"""Raise `frappe.LinkExistsError` if the document is dynamically linked"""
+	for args in _check_if_doc_is_dynamically_linked(doc, method=method):
+		raise_link_exists_exception(*args)
 
 
 def raise_link_exists_exception(doc, reference_doctype, reference_docname, row=""):
