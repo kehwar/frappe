@@ -11,7 +11,9 @@ from werkzeug.exceptions import NotFound
 import frappe
 from frappe import _, is_whitelisted, msgprint
 from frappe.core.doctype.file.utils import relink_mismatched_files
-from frappe.core.doctype.server_script.server_script_utils import run_server_script_for_doc_event
+from frappe.core.doctype.server_script.server_script_utils import (
+    run_server_script_for_doc_event,
+)
 from frappe.desk.form.document_follow import follow_document
 from frappe.integrations.doctype.webhook import run_webhooks
 from frappe.model import optional_fields, table_fields
@@ -1121,6 +1123,37 @@ class Document(BaseDocument):
 			force=force,
 			delete_permanently=delete_permanently,
 		)
+
+	def check_if_linked(self, method="Delete") -> bool:
+		"""Return True if this document is referenced by any other document, False otherwise.
+
+		Checks both static Link fields and dynamic link fields.
+
+		:param method: 'Delete' or 'Cancel' — controls which link types are checked.
+		"""
+		from frappe.model.delete_doc import (
+		    check_if_doc_is_dynamically_linked,
+		    check_if_doc_is_linked,
+		)
+
+		try:
+			check_if_doc_is_linked(self, method=method)
+			check_if_doc_is_dynamically_linked(self, method=method)
+			return False
+		except frappe.LinkExistsError:
+			return True
+
+	def get_linked_docs(self) -> dict[str, list]:
+		"""Return all documents that reference this document, grouped by doctype.
+
+		Uses :func:`frappe.desk.form.linked_with.get_linked_docs` after resolving
+		the full link-info map for this doctype.
+		"""
+		from frappe.desk.form.linked_with import get_linked_docs as _get_linked_docs
+		from frappe.desk.form.linked_with import get_linked_doctypes
+
+		linkinfo = get_linked_doctypes(self.doctype)
+		return _get_linked_docs(self.doctype, self.name, linkinfo)
 
 	def run_before_save_methods(self):
 		"""Run standard methods before	`INSERT` or `UPDATE`. Standard Methods are:
