@@ -2063,9 +2063,8 @@ def get_all_docs(doctype, *args, **kwargs):
 	        for doc in frappe.get_docs("Sales Order", filters={"docstatus": 0}):
 	            doc.submit()
 	"""
-	for key in ("fields", "pluck", "as_list"):
+	for key in ("fields", "pluck", "as_list", "as_dict"):
 		kwargs.pop(key, None)
-	kwargs["as_dict"] = False
 	names = get_all(doctype, *args, pluck="name", **kwargs)
 	return [get_doc(doctype, name) for name in names]
 
