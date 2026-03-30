@@ -24,10 +24,10 @@ from frappe.utils.image import optimize_image, strip_exif_data
 from frappe.utils.pdf import pdf_contains_js
 
 from .exceptions import (
-	AttachmentLimitReached,
-	FileTypeNotAllowed,
-	FolderNotEmpty,
-	MaxFileSizeReachedError,
+    AttachmentLimitReached,
+    FileTypeNotAllowed,
+    FolderNotEmpty,
+    MaxFileSizeReachedError,
 )
 from .utils import *
 
@@ -703,11 +703,13 @@ class File(Document):
 
 		if not file_exists:
 			if not overwrite:
-				self.file_name = generate_file_name(
+				self._unique_file_name = generate_file_name(
 					name=self.file_name,
 					suffix=self.content_hash[-6:],
 					is_private=self.is_private,
 				)
+			else:
+				self._unique_file_name = self.file_name
 			call_hook_method("before_write_file", file_size=self.file_size)
 			write_file_method = get_hook_method("write_file")
 			if write_file_method:
@@ -715,7 +717,8 @@ class File(Document):
 			return self.save_file_on_filesystem()
 
 	def save_file_on_filesystem(self):
-		safe_file_name = re.sub(r"[/\\%?#]", "_", self.file_name)
+		unique_file_name = getattr(self, "_unique_file_name", None) or self.file_name
+		safe_file_name = re.sub(r"[/\\%?#]", "_", unique_file_name)
 		if self.is_private:
 			self.file_url = f"/private/files/{safe_file_name}"
 		else:
@@ -723,7 +726,7 @@ class File(Document):
 
 		fpath = self.write_file()
 
-		return {"file_name": os.path.basename(fpath), "file_url": self.file_url}
+		return {"file_name": self.file_name, "file_url": self.file_url}
 
 	def check_max_file_size(self):
 		from frappe.core.api.file import get_max_file_size
