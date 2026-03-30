@@ -17,7 +17,13 @@ from frappe.database.schema import SPECIAL_CHAR_PATTERN
 from frappe.exceptions import DoesNotExistError
 from frappe.model.document import Document
 from frappe.permissions import SYSTEM_USER_ROLE, get_doctypes_with_read
-from frappe.utils import call_hook_method, cint, get_files_path, get_hook_method, get_url
+from frappe.utils import (
+    call_hook_method,
+    cint,
+    get_files_path,
+    get_hook_method,
+    get_url,
+)
 from frappe.utils.file_manager import is_safe_path
 from frappe.utils.html_utils import escape_html
 from frappe.utils.image import optimize_image, strip_exif_data
@@ -53,6 +59,7 @@ class File(Document):
 		attached_to_field: DF.Data | None
 		attached_to_name: DF.Data | None
 		content_hash: DF.Data | None
+		display_name: DF.Data | None
 		file_name: DF.Data | None
 		file_size: DF.Int
 		file_type: DF.Data | None
@@ -703,13 +710,14 @@ class File(Document):
 
 		if not file_exists:
 			if not overwrite:
-				self._unique_file_name = generate_file_name(
+				_clean_file_name = self.file_name
+				self.file_name = generate_file_name(
 					name=self.file_name,
 					suffix=self.content_hash[-6:],
 					is_private=self.is_private,
 				)
-			else:
-				self._unique_file_name = self.file_name
+				if self.is_private and self.file_name != _clean_file_name:
+					self.display_name = _clean_file_name
 			call_hook_method("before_write_file", file_size=self.file_size)
 			write_file_method = get_hook_method("write_file")
 			if write_file_method:
@@ -717,8 +725,7 @@ class File(Document):
 			return self.save_file_on_filesystem()
 
 	def save_file_on_filesystem(self):
-		unique_file_name = getattr(self, "_unique_file_name", None) or self.file_name
-		safe_file_name = re.sub(r"[/\\%?#]", "_", unique_file_name)
+		safe_file_name = re.sub(r"[/\\%?#]", "_", self.file_name)
 		if self.is_private:
 			self.file_url = f"/private/files/{safe_file_name}"
 		else:
@@ -726,7 +733,7 @@ class File(Document):
 
 		fpath = self.write_file()
 
-		return {"file_name": self.file_name, "file_url": self.file_url}
+		return {"file_name": os.path.basename(fpath), "file_url": self.file_url}
 
 	def check_max_file_size(self):
 		from frappe.core.api.file import get_max_file_size
