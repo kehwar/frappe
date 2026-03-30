@@ -284,7 +284,7 @@ def download_file(file_url: str):
 	if not file:
 		raise frappe.PermissionError
 
-	frappe.local.response.filename = os.path.basename(file_url)
+	frappe.local.response.filename = file.file_name
 	frappe.local.response.filecontent = file.get_content()
 	frappe.local.response.type = "download"
 
