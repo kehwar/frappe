@@ -288,12 +288,13 @@ def download_private_file(path: str) -> Response:
 		raise Forbidden(_("You don't have permission to access this file"))
 
 	make_access_log(doctype="File", document=file.name, file_type=os.path.splitext(path)[-1][1:])
-	return send_private_file(path.split("/private", 1)[1])
+	return send_private_file(path.split("/private", 1)[1], display_name=file.file_name)
 
 
-def send_private_file(path: str) -> Response:
+def send_private_file(path: str, display_name: str | None = None) -> Response:
 	path = os.path.join(frappe.local.conf.get("private_path", "private"), path.strip("/"))
 	filename = os.path.basename(path)
+	display_name = display_name or filename
 
 	if frappe.local.request.headers.get("X-Use-X-Accel-Redirect"):
 		path = "/protected/" + path
@@ -317,7 +318,7 @@ def send_private_file(path: str) -> Response:
 			environ=frappe.local.request.environ,
 			conditional=True,
 			as_attachment=as_attachment,
-			download_name=filename if as_attachment else None,
+			download_name=display_name,
 		)
 
 	return response
