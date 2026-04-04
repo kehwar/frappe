@@ -147,7 +147,7 @@ def get_next(
 		order = frappe.qb.asc
 
 	query = (
-		frappe.qb.get_query(doctype, filters=filters, fields=["name"], ignore_permissions=False)
+		frappe.qb.get_query(doctype, filters=filters, fields=["name"])
 		.orderby(sort_column, order=order)
 		.orderby(name_column, order=order)
 		.where(composite_condition)
