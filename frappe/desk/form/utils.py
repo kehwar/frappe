@@ -79,18 +79,16 @@ def update_comment_publicity(name: str, publish: bool):
 
 
 @frappe.whitelist()
-def get_next(doctype, value, prev, filters=None, sort_order="desc", sort_field="modified"):
+def get_next(
+	doctype: str,
+	value: str,
+	prev: str | int,
+	filters: dict | str | None = None,
+	sort_order: str = "desc",
+	sort_field: str = "modified",
+):
 	from frappe.model.base_document import get_controller
 	from frappe.model.utils import is_virtual_doctype
-
-	# Check if doctype is virtual
-	is_virtual = is_virtual_doctype(doctype)
-	
-	if is_virtual:
-		controller = get_controller(doctype)
-		# If controller has a custom get_next method, use it
-		if hasattr(controller, "get_next") and callable(getattr(controller, "get_next", None)):
-			return controller.get_next(doctype, value, prev, filters, sort_order, sort_field)
 
 	prev = int(prev)
 	if not filters:
@@ -98,42 +96,69 @@ def get_next(doctype, value, prev, filters=None, sort_order="desc", sort_field="
 	if isinstance(filters, str):
 		filters = json.loads(filters)
 
-	# # condition based on sort order
-	condition = ">" if sort_order.lower() == "asc" else "<"
-
-	# switch the condition
-	if prev:
-		sort_order = "asc" if sort_order.lower() == "desc" else "desc"
-		condition = "<" if condition == ">" else ">"
-
-	# # add condition for next or prev item
-	# For virtual doctypes, use controller's get_value if available
+	# Check if doctype is virtual
+	is_virtual = is_virtual_doctype(doctype)
 	if is_virtual:
 		controller = get_controller(doctype)
+		# If controller has a custom get_next method, use it
+		if hasattr(controller, "get_next") and callable(getattr(controller, "get_next", None)):
+			return controller.get_next(doctype, value, prev, filters, sort_order, sort_field)
+		
+		# Otherwise, use the get_value method to fetch the current sort value
 		if hasattr(controller, "get_value") and callable(getattr(controller, "get_value", None)):
-			sort_field_value = controller.get_value(value, sort_field)
+			current_sort_value = controller.get_value(value, sort_field)
 		else:
-			sort_field_value = frappe.get_value(doctype, value, sort_field)
-	else:
-		sort_field_value = frappe.get_value(doctype, value, sort_field)
-	
-	filters.append([doctype, sort_field, condition, sort_field_value])
-
-	res = frappe.get_list(
-		doctype,
-		fields=["name"],
-		filters=filters,
-		order_by=f"`tab{doctype}`.{sort_field}" + " " + sort_order,
-		limit_start=0,
-		limit_page_length=1,
-		as_list=True,
-	)
-
-	if not res:
+			frappe.throw(_("Virtual doctype must have a get_value method to use get_next"))
+		condition = "<" if prev else ">"
+		filters.append([doctype, sort_field, condition, current_sort_value])
+		
+		res = frappe.get_list(
+			doctype,
+			fields=["name"],
+			filters=filters,
+			order_by=f"{sort_field} {sort_order}",
+			limit_start=0,
+			limit_page_length=1,
+			as_list=True,
+		)
+		
+		if res:
+			return res[0][0]
+		
 		frappe.msgprint(_("No further records"))
 		return None
+
+	# For regular doctypes, use the query builder for better performance
+	table = frappe.qb.DocType(doctype)
+	sort_column = table[sort_field]
+	name_column = table.name
+	current_sort_value = frappe.db.get_value(doctype, value, sort_field)
+
+	is_ascending = sort_order.lower() == "asc"
+	if prev == is_ascending:
+		composite_condition = (sort_column < current_sort_value) | (
+			(sort_column == current_sort_value) & (name_column < value)
+		)
+		order = frappe.qb.desc
 	else:
+		composite_condition = (sort_column > current_sort_value) | (
+			(sort_column == current_sort_value) & (name_column > value)
+		)
+		order = frappe.qb.asc
+
+	query = (
+		frappe.qb.get_query(doctype, filters=filters, fields=["name"], ignore_permissions=False)
+		.orderby(sort_column, order=order)
+		.orderby(name_column, order=order)
+		.where(composite_condition)
+		.limit(1)
+	)
+
+	if res := query.run(as_list=True):
 		return res[0][0]
+
+	frappe.msgprint(_("No further records"))
+	return None
 
 
 def get_pdf_link(doctype, docname, print_format="Standard", no_letterhead=0):

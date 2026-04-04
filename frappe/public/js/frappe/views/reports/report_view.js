@@ -715,9 +715,6 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 		} else if (expression.substr(0, 5) == "eval:") {
 			try {
 				out = frappe.utils.eval(expression.substr(5), { doc: data });
-				if (parent && parent.istable && expression.includes("is_submittable")) {
-					out = true;
-				}
 			} catch (e) {
 				frappe.throw(__('Invalid "depends_on" expression'));
 			}
@@ -1028,7 +1025,7 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 			columns: 2,
 			options: columns[this.doctype]
 				.filter((df) => {
-					return !df.hidden && df.fieldname !== "name";
+					return !df.hidden && df.fieldname !== "name" && !df.is_virtual;
 				})
 				.map((df) => ({
 					label: __(df.label, null, df.parent),
@@ -1538,6 +1535,7 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 			},
 			{
 				label: __("Print"),
+				condition: () => frappe.model.can_print(this.doctype),
 				action: () => {
 					// prepare rows in their current state, sorted and filtered
 					const rows_in_order = this.datatable.datamanager.rowViewOrder

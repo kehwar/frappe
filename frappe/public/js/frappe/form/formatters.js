@@ -35,11 +35,11 @@ frappe.form.formatters = {
 	},
 	Data: function (value, df) {
 		if (df && df.options == "URL") {
-			if (!value) return;
+			if (!value) return "";
 			return `<a href="${value}" title="Open Link" target="_blank">${value}</a>`;
 		}
 		if (df && df.options == "IBAN") {
-			if (!value) return;
+			if (!value) return "";
 			return frappe.utils.get_formatted_iban(value);
 		}
 		value = value == null ? "" : value;
@@ -408,7 +408,8 @@ frappe.form.formatters = {
 };
 
 function format_attachment_url(url) {
-	return url ? `<a href="${url}" target="_blank">${url}</a>` : "";
+	let escaped = frappe.utils.escape_html(url);
+	return url ? `<a href="${escaped}" target="_blank">${escaped}</a>` : "";
 }
 
 frappe.form.get_formatter = function (fieldtype) {

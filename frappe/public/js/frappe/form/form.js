@@ -1221,7 +1221,11 @@ frappe.ui.form.Form = class FrappeForm {
 		frappe.re_route[frappe.router.get_sub_path()] = `${encodeURIComponent(
 			frappe.router.slug(this.doctype)
 		)}/${encodeURIComponent(name)}`;
-		!frappe._from_link && frappe.set_route("Form", this.doctype, name);
+
+		// Skip routing only when the document is created from a Form view's Link field
+		if (!frappe._from_link?.field_obj?.frm) {
+			frappe.set_route("Form", this.doctype, name);
+		}
 	}
 
 	// ACTIONS
@@ -1284,7 +1288,7 @@ frappe.ui.form.Form = class FrappeForm {
 	}
 
 	email_doc(message) {
-		new frappe.views.CommunicationComposer({
+		return new frappe.views.CommunicationComposer({
 			doc: this.doc,
 			frm: this,
 			subject: __(this.meta.name) + ": " + this.docname,
@@ -1415,9 +1419,28 @@ frappe.ui.form.Form = class FrappeForm {
 		this.custom_buttons = {};
 	}
 
-	//Remove specific custom button by button Label
+	// Remove specific custom button by button Label
 	remove_custom_button(label, group) {
 		this.page.remove_inner_button(label, group);
+
+		// Remove actions from menu
+		delete this.custom_buttons[label];
+		let menu_item_label = group ? `${group} > ${label}` : label;
+		let $btn = this.page.is_in_group_button_dropdown(
+			this.page.menu,
+			"li > a.grey-link > span",
+			menu_item_label
+		);
+
+		if ($btn) {
+			let $linkBody = $btn.parent().parent();
+			if ($linkBody) {
+				// If last button, remove divider too
+				let $divider = $linkBody.next(".dropdown-divider");
+				if ($divider) $divider.remove();
+				$linkBody.remove();
+			}
+		}
 	}
 
 	scroll_to_element() {
