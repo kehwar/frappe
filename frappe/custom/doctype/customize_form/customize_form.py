@@ -12,10 +12,10 @@ import frappe
 import frappe.translate
 from frappe import _
 from frappe.core.doctype.doctype.doctype import (
-	check_email_append_to,
-	validate_autoincrement_autoname,
-	validate_fields_for_doctype,
-	validate_series,
+    check_email_append_to,
+    validate_autoincrement_autoname,
+    validate_fields_for_doctype,
+    validate_series,
 )
 from frappe.custom.doctype.custom_field.custom_field import create_custom_field
 from frappe.custom.doctype.property_setter.property_setter import delete_property_setter
@@ -36,7 +36,9 @@ class CustomizeForm(Document):
 		from frappe.core.doctype.doctype_action.doctype_action import DocTypeAction
 		from frappe.core.doctype.doctype_link.doctype_link import DocTypeLink
 		from frappe.core.doctype.doctype_state.doctype_state import DocTypeState
-		from frappe.custom.doctype.customize_form_field.customize_form_field import CustomizeFormField
+		from frappe.custom.doctype.customize_form_field.customize_form_field import (
+		    CustomizeFormField,
+		)
 		from frappe.types import DF
 
 		actions: DF.Table[DocTypeAction]
@@ -645,6 +647,72 @@ class CustomizeForm(Document):
 			return
 
 		frappe.db.delete("Property Setter", {"name": ("in", property_setters)})
+		frappe.clear_cache(doctype=self.doc_type)
+		self.fetch_to_customize()
+
+	@frappe.whitelist()
+	def isolate_custom_fields(self):
+		"""Move all custom data fields under a dedicated 'Custom Fields' Tab Break.
+
+		- All custom layout fields (Tab Break, Section Break, Column Break) are deleted.
+		- A new 'Custom Fields' Tab Break is inserted after the last standard field.
+		- Every remaining custom data field is chained after that tab via insert_after.
+		- The field_order property setter is removed so insert_after ordering takes effect.
+		"""
+		if not self.doc_type:
+			return
+
+		meta = frappe.get_meta(self.doc_type, cached=False)
+
+		layout_types = frozenset(("Tab Break", "Section Break", "Column Break"))
+		custom_layout_fieldnames = []
+		custom_data_fieldnames = []
+
+		for df in meta.get("fields"):
+			if not df.get("is_custom_field"):
+				continue
+			if df.fieldtype in layout_types:
+				custom_layout_fieldnames.append(df.fieldname)
+			else:
+				custom_data_fieldnames.append(df.fieldname)
+
+		if not custom_data_fieldnames:
+			frappe.msgprint(_("No custom data fields to isolate."))
+			return
+
+		# Delete all custom layout Custom Fields
+		if custom_layout_fieldnames:
+			cf_names = frappe.get_all(
+				"Custom Field",
+				filters={"dt": self.doc_type, "fieldname": ("in", custom_layout_fieldnames)},
+				pluck="name",
+			)
+			for cf_name in cf_names:
+				frappe.delete_doc("Custom Field", cf_name, ignore_permissions=True)
+
+		# Insert the new tab after the last standard field
+		standard_fields = [df for df in meta.get("fields") if not df.get("is_custom_field")]
+		last_standard_fieldname = standard_fields[-1].fieldname if standard_fields else None
+
+		tab_cf = frappe.new_doc("Custom Field")
+		tab_cf.dt = self.doc_type
+		tab_cf.label = "Custom Fields"
+		tab_cf.fieldname = "custom_fields_tab"
+		tab_cf.fieldtype = "Tab Break"
+		tab_cf.insert_after = last_standard_fieldname
+		tab_cf.insert(ignore_permissions=True)
+
+		# Chain every custom data field after the tab in their current order
+		prev_fieldname = "custom_fields_tab"
+		for fieldname in custom_data_fieldnames:
+			cf_name = frappe.db.get_value("Custom Field", {"dt": self.doc_type, "fieldname": fieldname})
+			if cf_name:
+				frappe.db.set_value("Custom Field", cf_name, "insert_after", prev_fieldname)
+				prev_fieldname = fieldname
+
+		# Remove field_order property setter so insert_after ordering takes effect cleanly
+		frappe.db.delete("Property Setter", {"doc_type": self.doc_type, "property": "field_order"})
+
 		frappe.clear_cache(doctype=self.doc_type)
 		self.fetch_to_customize()
 

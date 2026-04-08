@@ -133,6 +133,14 @@ frappe.ui.form.on("Customize Form", {
 				);
 
 				frm.add_custom_button(
+					__("Isolate Custom Fields"),
+					() => {
+						frm.trigger("isolate_custom_fields");
+					},
+					__("Actions")
+				);
+
+				frm.add_custom_button(
 					__("Reset All Customizations"),
 					function () {
 						frappe.customize_form.confirm(__("Remove all customizations?"), frm);
@@ -192,6 +200,29 @@ frappe.ui.form.on("Customize Form", {
 						if (!r.exc) {
 							frappe.show_alert({
 								message: __("Layout Reset"),
+								indicator: "green",
+							});
+							frappe.customize_form.clear_locals_and_refresh(frm);
+						}
+					},
+				});
+			}
+		);
+	},
+
+	isolate_custom_fields(frm) {
+		frappe.confirm(
+			__(
+				"All custom layout fields will be removed and custom data fields will be grouped under a 'Custom Fields' tab. Continue?"
+			),
+			() => {
+				return frm.call({
+					doc: frm.doc,
+					method: "isolate_custom_fields",
+					callback: function (r) {
+						if (!r.exc) {
+							frappe.show_alert({
+								message: __("Custom Fields Isolated"),
 								indicator: "green",
 							});
 							frappe.customize_form.clear_locals_and_refresh(frm);
