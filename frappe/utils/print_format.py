@@ -237,7 +237,7 @@ def download_pdf(
 	no_letterhead=0,
 	language=None,
 	letterhead=None,
-	pdf_generator: Literal["wkhtmltopdf", "chrome"] | None = None,
+	pdf_generator: Literal["wkhtmltopdf", "chrome", "typst"] | None = None,
 ):
 	doc = doc or frappe.get_doc(doctype, name)
 	validate_print_permission(doc)
