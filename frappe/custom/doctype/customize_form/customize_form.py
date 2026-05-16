@@ -898,6 +898,8 @@ ALLOWED_FIELDTYPE_CHANGE = (
 	("Currency", "Float", "Percent"),
 	("Small Text", "Data"),
 	("Text", "Data"),
+	("Text", "Read Only"),
+	("Text", "Link", "Dynamic Link"),
 	("Text", "Text Editor", "Code", "Signature", "HTML Editor"),
 	("Data", "Select"),
 	("Text", "Small Text", "Long Text"),
