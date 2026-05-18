@@ -500,6 +500,7 @@ def msgprint(
 	wide: bool = False,
 	*,
 	realtime=False,
+	scroll_to_field: str | None = None,
 ) -> None:
 	"""Print a message to the user (via HTTP response).
 	Messages are sent in the `__server_messages` property in the
@@ -514,6 +515,7 @@ def msgprint(
 	:param is_minimizable: [optional] Allow users to minimize the modal
 	:param wide: [optional] Show wide modal
 	:param realtime: Publish message immediately using websocket.
+	:param scroll_to_field: [optional] Fieldname to jump to on the form when the error is displayed.
 	"""
 	import inspect
 	import sys
@@ -554,6 +556,9 @@ def msgprint(
 		print(f"Message: {_strip_html_tags(out.message)}")
 
 	out.title = title or _("Message", context="Default title of the message dialog")
+
+	if scroll_to_field:
+		out.scroll_to_field = scroll_to_field
 
 	if not indicator and raise_exception:
 		indicator = "red"
@@ -605,6 +610,7 @@ def throw(
 	wide: bool = False,
 	as_list: bool = False,
 	primary_action=None,
+	scroll_to_field: str | None = None,
 ) -> None:
 	"""Throw execption and show message (`msgprint`).
 
@@ -615,6 +621,7 @@ def throw(
 	:param wide: [optional] Show wide modal
 	:param as_list: [optional] If `msg` is a list, render as un-ordered list.
 	:param primary_action: [optional] Bind a primary server/client side action.
+	:param scroll_to_field: [optional] Fieldname to jump to on the form when the error is displayed.
 	"""
 	msgprint(
 		msg,
@@ -625,6 +632,7 @@ def throw(
 		wide=wide,
 		as_list=as_list,
 		primary_action=primary_action,
+		scroll_to_field=scroll_to_field,
 	)
 
 

@@ -299,6 +299,11 @@ frappe.msgprint = function (msg, title, is_minimizable) {
 	frappe.msg_dialog.$wrapper.css("z-index", 2000);
 	frappe.msg_dialog.show();
 
+	// jump to field if specified
+	if (data.scroll_to_field && typeof cur_frm !== "undefined" && cur_frm?.scroll_to_field) {
+		cur_frm.scroll_to_field(data.scroll_to_field);
+	}
+
 	return frappe.msg_dialog;
 };
 
@@ -467,6 +472,11 @@ frappe.show_alert = frappe.toast = function (message, seconds = 7, actions = {})
 		setTimeout(() => div.remove(), 800);
 		return false;
 	}, seconds * 1000);
+
+	// jump to field if specified
+	if (message.scroll_to_field && typeof cur_frm !== "undefined" && cur_frm?.scroll_to_field) {
+		cur_frm.scroll_to_field(message.scroll_to_field);
+	}
 
 	return div;
 };
