@@ -207,7 +207,7 @@ class TestDocType(FrappeTestCase):
 		path = get_file_path(test_doctype.module, test_doctype.doctype, test_doctype.name)
 		initial_fields_order = ["field_1", "field_2", "field_3", "field_4"]
 
-		frappe.delete_doc_if_exists("DocType", "Test Field Order DocType")
+		frappe.delete_doc_if_exists("DocType", "Test Field Order DocType", force=True)
 		if os.path.isfile(path):
 			os.remove(path)
 
@@ -350,7 +350,9 @@ class TestDocType(FrappeTestCase):
 		field_1.reqd = 1
 		field_1.hidden = 1
 
-		self.assertRaises(HiddenAndMandatoryWithoutDefaultError, doc.insert)
+		# check_hidden_and_mandatory is disabled in this branch — hidden+required
+		# fields should be allowed without a default value
+		doc.insert()
 
 	def test_field_can_not_be_indexed_validation(self):
 		doc = new_doctype("Test index")

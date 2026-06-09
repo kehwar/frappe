@@ -10,6 +10,7 @@ from frappe.utils import get_site_url
 
 scripts = [
 	dict(
+		title="test_todo",
 		name="test_todo",
 		script_type="DocType Event",
 		doctype_event="Before Insert",
@@ -20,6 +21,7 @@ if "test" in doc.description:
 """,
 	),
 	dict(
+		title="test_todo_validate",
 		name="test_todo_validate",
 		script_type="DocType Event",
 		doctype_event="Before Insert",
@@ -30,6 +32,7 @@ if "validate" in doc.description:
 """,
 	),
 	dict(
+		title="test_api",
 		name="test_api",
 		script_type="API",
 		api_method="test_server_script",
@@ -39,6 +42,7 @@ frappe.response['message'] = 'hello'
 """,
 	),
 	dict(
+		title="test_return_value",
 		name="test_return_value",
 		script_type="API",
 		api_method="test_return_value",
@@ -48,6 +52,7 @@ frappe.flags = 'hello'
 """,
 	),
 	dict(
+		title="test_permission_query",
 		name="test_permission_query",
 		script_type="Permission Query",
 		reference_doctype="ToDo",
@@ -56,15 +61,18 @@ conditions = '1 = 1'
 """,
 	),
 	dict(
+		title="test_invalid_namespace_method",
 		name="test_invalid_namespace_method",
 		script_type="DocType Event",
 		doctype_event="Before Insert",
 		reference_doctype="Note",
+		disabled=1,
 		script="""
 frappe.method_that_doesnt_exist("do some magic")
 """,
 	),
 	dict(
+		title="test_todo_commit",
 		name="test_todo_commit",
 		script_type="DocType Event",
 		doctype_event="Before Save",
@@ -75,6 +83,7 @@ frappe.db.commit()
 """,
 	),
 	dict(
+		title="test_add_index",
 		name="test_add_index",
 		script_type="DocType Event",
 		doctype_event="Before Save",
@@ -85,6 +94,7 @@ frappe.db.add_index("Todo", ["color", "date"])
 """,
 	),
 	dict(
+		title="test_before_rename",
 		name="test_before_rename",
 		script_type="DocType Event",
 		doctype_event="After Rename",
@@ -95,6 +105,7 @@ doc.save()
 """,
 	),
 	dict(
+		title="test_after_rename",
 		name="test_after_rename",
 		script_type="DocType Event",
 		doctype_event="After Rename",
@@ -244,8 +255,15 @@ class TestServerScript(FrappeTestCase):
 
 	def test_attribute_error(self):
 		"""Raise AttributeError if method not found in Namespace"""
-		note = frappe.get_doc({"doctype": "Note", "title": "Test Note: Server Script"})
-		self.assertRaises(AttributeError, note.insert)
+		script = frappe.get_doc("Server Script", "test_invalid_namespace_method")
+		script.disabled = 0
+		script.save()
+		try:
+			note = frappe.get_doc({"doctype": "Note", "title": "Test Note: Server Script"})
+			self.assertRaises(AttributeError, note.insert)
+		finally:
+			script.disabled = 1
+			script.save()
 
 	def test_syntax_validation(self):
 		server_script = scripts[0]
@@ -284,6 +302,7 @@ class TestServerScript(FrappeTestCase):
 
 		script = frappe.get_doc(
 			doctype="Server Script",
+			title="test_qb_restrictions",
 			name="test_qb_restrictions",
 			script_type="API",
 			api_method="test_qb_restrictions",
@@ -321,6 +340,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 		# why not
 		script = frappe.get_doc(
 			doctype="Server Script",
+			title="test_nested_scripts_1",
 			name="test_nested_scripts_1",
 			script_type="API",
 			api_method="test_nested_scripts_1",
@@ -331,6 +351,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 
 		script = frappe.get_doc(
 			doctype="Server Script",
+			title="test_nested_scripts_2",
 			name="test_nested_scripts_2",
 			script_type="API",
 			api_method="test_nested_scripts_2",
@@ -342,6 +363,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 	def test_server_script_rate_limiting(self):
 		script1 = frappe.get_doc(
 			doctype="Server Script",
+			title="rate_limited_server_script",
 			name="rate_limited_server_script",
 			script_type="API",
 			enable_rate_limit=1,
@@ -355,6 +377,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 
 		script2 = frappe.get_doc(
 			doctype="Server Script",
+			title="rate_limited_server_script2",
 			name="rate_limited_server_script2",
 			script_type="API",
 			enable_rate_limit=1,
@@ -390,6 +413,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 	def test_server_script_scheduled(self):
 		scheduled_script = frappe.get_doc(
 			doctype="Server Script",
+			title="scheduled_script_wo_cron",
 			name="scheduled_script_wo_cron",
 			script_type="Scheduler Event",
 			script="""frappe.flags = {"test": True}""",
@@ -398,6 +422,7 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 
 		cron_script = frappe.get_doc(
 			doctype="Server Script",
+			title="scheduled_script_w_cron",
 			name="scheduled_script_w_cron",
 			script_type="Scheduler Event",
 			script="""frappe.flags = {"test": True}""",
@@ -438,11 +463,10 @@ frappe.qb.from_(todo).select(todo.name).where(todo.name == "{todo.name}").run()
 		self.assertTrue(todo.flags.get("on_change_called"))
 
 	def test_before_change_event(self):
-		"""Test that Before Change event is triggered when document is updated"""
+		"""Test that Before Change event is triggered when document is updated via db_set"""
 		todo = frappe.get_doc({"doctype": "ToDo", "description": "Original"}).insert()
-		# Update the todo to trigger before_change
-		todo.description = "Updated"
-		todo.save()
+		# Update the todo via db_set to trigger before_change
+		todo.db_set("description", "Updated")
 		# Check that before_change was called
 		self.assertTrue(todo.flags.get("before_change_called"))
 
