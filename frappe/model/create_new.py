@@ -12,7 +12,7 @@ import frappe.defaults
 from frappe.core.doctype.user_permission.user_permission import get_user_permissions
 from frappe.model import data_fieldtypes
 from frappe.permissions import filter_allowed_docs_for_doctype
-from frappe.utils import cstr, now_datetime, nowdate, nowtime
+from frappe.utils import cint, cstr, flt, now_datetime, nowdate, nowtime
 
 
 def get_new_doc(doctype, parent_doc=None, parentfield=None, as_dict=False):
@@ -35,6 +35,7 @@ def make_new_doc(doctype):
 	doc = frappe.get_doc({"doctype": doctype, "__islocal": 1, "owner": frappe.session.user, "docstatus": 0})
 
 	set_user_and_static_default_values(doc)
+	_apply_remaining_field_defaults(doc)
 
 	doc._fix_numeric_types()
 	doc = doc.get_valid_dict(sanitize=False)
@@ -52,7 +53,9 @@ def set_user_and_static_default_values(doc):
 	defaults = frappe.defaults.get_defaults()
 
 	for df in doc.meta.get("fields"):
-		if df.fieldtype in data_fieldtypes:
+		if not (df.fieldtype in data_fieldtypes and getattr(df, "options", None) and getattr(df, "parent", None)):
+			continue
+		try:
 			# user permissions for link options
 			doctype_user_permissions = user_permissions.get(df.options, [])
 			# Allowed records for the reference doctype (link field) along with default doc
@@ -74,7 +77,9 @@ def set_user_and_static_default_values(doc):
 						df, doctype_user_permissions, allowed_records
 					)
 					if static_default_value is not None:
-						doc.set(df.fieldname, static_default_value)
+							doc.set(df.fieldname, static_default_value)
+		except AttributeError:
+			pass
 
 
 def get_user_default_value(df, defaults, doctype_user_permissions, allowed_records, default_doc):
@@ -155,6 +160,34 @@ def set_dynamic_default_values(doc, parent_doc, parentfield):
 
 	if parentfield:
 		doc["parentfield"] = parentfield
+
+
+def _apply_remaining_field_defaults(doc):
+	"""Apply DocType metadata defaults for fields not handled by set_user_and_static_default_values.
+
+	set_user_and_static_default_values only processes fields with `options` (Link, Select, etc.).
+	This fallback applies the `default` value from DocType JSON for remaining fieldtypes
+	(Check, Float, Int, Currency, Percent, etc.) that have a simple static default.
+	"""
+	for df in doc.meta.get("fields"):
+		if df.get("default") is None:
+			continue
+		if doc.get(df.fieldname) not in (None, ""):
+			continue
+		if df.fieldtype in ("Link", "Dynamic Link", "Select"):
+			continue  # already handled by set_user_and_static_default_values
+		if cstr(df.default).startswith(":"):
+			continue  # dynamic default, handled by set_dynamic_default_values
+		if df.default in ("__user", "__today", "Today"):
+			continue  # handled elsewhere
+		if df.fieldtype == "Check":
+			doc.set(df.fieldname, cint(df.default))
+		elif df.fieldtype in ("Int", "Long Int"):
+			doc.set(df.fieldname, cint(df.default))
+		elif df.fieldtype in ("Float", "Currency", "Percent"):
+			doc.set(df.fieldname, flt(df.default))
+		else:
+			doc.set(df.fieldname, df.default)
 
 
 def user_permissions_exist(df, doctype_user_permissions):
